@@ -3,6 +3,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'widgets/optimized_dropdown.dart';
+
 class LoginScreen extends StatefulWidget {
   final Function(String, String, String) onLogin;
 
@@ -18,7 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
   String _userId = '';
   String _password = '';
   String _loginLocation = '车间A';
-  final List<String> _locations = ['车间A', '车间B', '办公室', '仓库'];
 
   @override
   void initState() {
@@ -102,7 +103,6 @@ class _LoginScreenState extends State<LoginScreen> {
       widget.onLogin(_userId, _password, _loginLocation);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -166,19 +166,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       onChanged: (value) => _password = value,
                     ),
                     const SizedBox(height: 20),
-                    DropdownButtonFormField<String>(
+                    //下拉框
+                    OptimizedDropdown<String>(
                       value: _loginLocation,
-                      items: _locations
-                          .map((location) => DropdownMenuItem(
-                        value: location,
-                        child: Text(location),
-                      ))
-                          .toList(),
-                      onChanged: (value) =>
-                          setState(() => _loginLocation = value!),
+                      items: const ['车间A', '车间B', '办公室', '仓库'],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _loginLocation = value);
+                        }
+                      },
+                      hintText: '选择登入地点',
+                      icon: const Icon(Icons.location_on),
+                      menuMaxHeight: 180,
                       decoration: const InputDecoration(
-                          labelText: '登入地点',
-                          prefixIcon: Icon(Icons.location_on)),
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                      ),
                     ),
                     const SizedBox(height: 30),
                     ElevatedButton.icon(
