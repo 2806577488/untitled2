@@ -3,10 +3,20 @@ import 'menu.dart';
 import 'button_bar.dart';
 import 'main_content.dart';
 import 'login_screen.dart';
-
+import 'utils/shader_warmup.dart';
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    Builder(
+      builder: (context) {
+        // 执行着色器预热
+        WarmUpTheShader.warmUp(context);
+        return const MyApp();
+      },
+    ),
+  );
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -47,10 +57,11 @@ class _MyHomePageState extends State<MyHomePage> {
   void handleLogin(String userId, String password, String location) {
     setState(() {
       _isLoggedIn = true;
-      _userId = userId;          // 正确赋值
+      _userId = userId; // 正确赋值
       _loginLocation = location; // 正确赋值
     });
   }
+
   void _incrementCounter() {
     setState(() {
       _counter++;
@@ -85,21 +96,21 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       body: _isLoggedIn
           ? Column(
-        children: [
-          Menu(
-            userId: _userId,
-            loginLocation: _loginLocation,
-            onMessageUpdate: _updateMessage,
-          ),
-          CustomButtonBar(
-            onIncrement: _incrementCounter,
-            onReset: _resetCounter,
-            onShowInfo: _updateMessage,
-          ),
-          MainContent(counter: _counter),
-          _buildMessageArea(),
-        ],
-      )
+              children: [
+                Menu(
+                  userId: _userId,
+                  loginLocation: _loginLocation,
+                  onMessageUpdate: _updateMessage,
+                ),
+                CustomButtonBar(
+                  onIncrement: _incrementCounter,
+                  onReset: _resetCounter,
+                  onShowInfo: _updateMessage,
+                ),
+                MainContent(counter: _counter),
+                _buildMessageArea(),
+              ],
+            )
           : LoginScreen(onLogin: handleLogin), // 使用公共方法
     );
   }

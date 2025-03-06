@@ -15,9 +15,9 @@ class Menu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60,  // 增加高度
+      height: 60, // 增加高度
       color: Colors.blue.shade200,
-      padding: const EdgeInsets.symmetric(horizontal: 16),  // 添加水平边距
+      padding: const EdgeInsets.symmetric(horizontal: 16), // 添加水平边距
       child: Row(
         children: [
           // 左侧菜单按钮

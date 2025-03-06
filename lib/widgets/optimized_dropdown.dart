@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 class OptimizedDropdown<T> extends StatefulWidget {
   final T? value;
-  final List<T> items;
+  final List<T> items; // 修改为接收原始数据列表
   final ValueChanged<T?>? onChanged;
+  final String Function(T)? itemTextBuilder; // 新增文本构建器
   final String? hintText;
   final Widget? icon;
   final double menuMaxHeight;
@@ -15,6 +16,7 @@ class OptimizedDropdown<T> extends StatefulWidget {
     required this.items,
     this.value,
     this.onChanged,
+    this.itemTextBuilder, // 新增参数
     this.hintText,
     this.icon,
     this.menuMaxHeight = 200,
@@ -27,8 +29,7 @@ class OptimizedDropdown<T> extends StatefulWidget {
 }
 
 class _OptimizedDropdownState<T> extends State<OptimizedDropdown<T>> {
-  // 预构建菜单项（关键性能优化）
-  late final List<DropdownMenuItem<T>> _prebuiltItems;
+  late List<DropdownMenuItem<T>> _prebuiltItems;
 
   @override
   void initState() {
@@ -39,21 +40,28 @@ class _OptimizedDropdownState<T> extends State<OptimizedDropdown<T>> {
   @override
   void didUpdateWidget(covariant OptimizedDropdown<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.items != widget.items) {
+    if (oldWidget.items != widget.items ||
+        oldWidget.itemTextBuilder != widget.itemTextBuilder) {
       _prebuiltItems = _buildMenuItems();
     }
   }
 
   List<DropdownMenuItem<T>> _buildMenuItems() {
-    return widget.items.map((item) {
+    return widget.items.map<DropdownMenuItem<T>>((T item) {
       return DropdownMenuItem<T>(
-        value: item,
+        value: item, // 关键修复：使用当前item作为值
         child: Text(
-          item.toString(),
+          _getItemText(item),
           style: const TextStyle(fontSize: 14),
         ),
       );
     }).toList(growable: false);
+  }
+
+  String _getItemText(T item) {
+    return widget.itemTextBuilder != null
+        ? widget.itemTextBuilder!(item)
+        : item.toString();
   }
 
   @override
@@ -83,7 +91,7 @@ class _OptimizedDropdownState<T> extends State<OptimizedDropdown<T>> {
               selectedItemBuilder: (context) {
                 return widget.items.map((item) {
                   return Text(
-                    item.toString(),
+                    _getItemText(item),
                     style: const TextStyle(fontSize: 14),
                   );
                 }).toList();

@@ -15,10 +15,13 @@ add_executable(${BINARY_NAME} WIN32
   "Runner.rc"
   "runner.exe.manifest"
 )
-
+target_link_libraries(${BINARY_NAME} PRIVATE d3d11.lib dxgi.lib)
 # Apply the standard set of build settings. This can be removed for applications
 # that need different build settings.
-apply_standard_settings(${BINARY_NAME})
+# 添加DirectX 12优化
+#find_package(D3D12)
+#target_link_libraries(${BINARY_NAME} PRIVATE d3d12.lib dxgi.lib)
+
 
 # Add preprocessor definitions for the build version.
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION=\"${FLUTTER_VERSION}\"")
