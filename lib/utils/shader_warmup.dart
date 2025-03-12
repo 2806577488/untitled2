@@ -119,7 +119,7 @@ class WarmUpTheShader {
   }
 
   static void _warmUpButtons(Canvas canvas) {
-    final rect = Rect.fromLTWH(0,0,100,40);
+    const rect = Rect.fromLTWH(0,0,100,40);
     final paint = Paint()
       ..color = Colors.blue
       ..style = PaintingStyle.fill;
