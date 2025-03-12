@@ -21,14 +21,36 @@ class WarmUpTheShader {
       _warmUpDropdown(canvas, screenSize);
       _warmUpButtons(canvas);
       _warmUpText(canvas);
-
+      _warmUpDialogComponents(canvas, screenSize);
       recorder.endRecording().toImage(1, 1).then((_) {
         final cost = DateTime.now().millisecondsSinceEpoch - startTime;
         debugPrint('Shader预热完成，耗时${cost}ms');
       });
     });
   }
+  static void _warmUpDialogComponents(Canvas canvas, Size size) {
+    // 预热对话框圆角
+    final dialogRRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: size.center(Offset.zero),
+        width: size.width * 0.8,
+        height: size.height * 0.6,
+      ),
+      const Radius.circular(12),
+    );
+    canvas.drawPath(_rrectToPath(dialogRRect), Paint()..color=Colors.white);
 
+    // 预热滚动条
+    final scrollPaint = Paint()
+      ..color = Colors.grey[300]!
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawLine(
+      const Offset(0, 0),
+      const Offset(0, 100),
+      scrollPaint,
+    );
+  }
   static void _warmUpDropdown(Canvas canvas, Size size) {
     final paint = Paint();
 
