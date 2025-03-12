@@ -27,9 +27,9 @@ class CustomDialog extends StatelessWidget {
       canPop: false, // 禁用返回键关闭
       child: AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(24),
         ),
-        titlePadding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         actionsPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         title: Text(title),
@@ -37,20 +37,31 @@ class CustomDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SelectionArea(
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            // 内容区域（可滚动）
+            Expanded(
               child: SingleChildScrollView(
-                child: Text(
-                  content,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    height: 1.5,
-                    color: Colors.black87,
+                physics: const ClampingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SelectionArea(
+                  child: Text(
+                    content,
+                    style: const TextStyle(fontSize: 16, height: 1.5),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            _buildButtons(context),
+            // 按钮区域
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: _buildButtons(context),
+            ),
           ],
         ),
       ),
