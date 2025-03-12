@@ -182,61 +182,6 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         setState(() => _apiError = "请求失败 (${response.statusCode})");
       }
-    } catch (e,stack) {
-      final errorMsg = logError(e, stack);
-      //final errorMsg = e.toString().replaceAll('Exception:', '').trim();
-
-      // 显示错误对话框
-      if (mounted) {
-        CustomDialog.show(
-          context: context, // 确保能访问有效的BuildContext
-          title: "验证失败",
-          content: "工号验证错误：$errorMsg",
-          buttonType: DialogButtonType.singleConfirm,
-          onConfirm: () => Navigator.of(context).pop(),
-        );
-      }
-
-      setState(() => _apiError =e.toString());
-    } finally {}
-    return;
-  }
-
-  Future<bool> _getUserYLTLogin(String userCode, String password,
-      String hospitalId, String hisType) async {
-    bool loginstatus = false;
-    setState(() {
-      _apiError = null;
-      _loginLocation.clear();
-    });
-    try {
-      final response = await http
-          .post(
-            Uri.parse(
-                'https://doctor.xyhis.com/Api/NewYLTBackstage/PostCallInterface'),
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'User-Agent': 'Mozilla/5.0 (...) Chrome/120.0.0.0 Safari/537.36'
-            },
-            body: 'tokencode=8ab6c803f9a380df2796315cad1b4280'
-                '&DocumentElement=GetUserYLTLogin'
-                '&Code=${Uri.encodeComponent(userCode)}'
-                '&Password=${Uri.encodeComponent(password)}'
-                '&hospitalId=${Uri.encodeComponent(hospitalId)}'
-                '&hisType=${Uri.encodeComponent(hisType)}',
-          )
-          .timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final locations = parseLoingUserAndPassword(response.body);
-        setState(() {
-          _loginLocation = locations;
-          _selectedLocation = locations.isNotEmpty ? locations.first : null;
-        });
-        loginstatus = true;
-      } else {
-        setState(() => _apiError = "请求失败 (${response.statusCode})");
-      }
     } catch (e) {
       setState(() => _apiError = e.toString());
     } finally {}
@@ -339,22 +284,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       return false;
     } catch (e) {
-      return false;
-// 修改后的提交方法
-  Future<bool> _submit(String userCode, String passWord, String hospitalId,
-      String hisType) async {
-    try {
-      if (_formKey.currentState!.validate() && _selectedLocation != null) {
-        final result =
-            await _getUserYLTLogin(userCode, passWord, hospitalId, hisType);
-        if (result) {
-          widget.onLogin(userCode, passWord, hospitalId);
-        }
-        return result;
-      }
-      return false;
-    } catch (e) {
-      print('提交失败: $e');
       return false;
     }
   }
