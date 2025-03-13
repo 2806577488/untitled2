@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:untitled2/model/HospitalResponse.dart';
 import 'package:untitled2/tools/Error.dart';
 import 'package:untitled2/utils/customDialog.dart';
+import 'package:untitled2/utils/shader_warmup.dart';
 import 'widgets/optimized_dropdown.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -50,27 +51,45 @@ class _LoginScreenState extends State<LoginScreen> {
   // 解析医院信息响应
   List<Location> parseHospitalResponse(String responseBody) {
     try {
+      // 1. 解析原始JSON数据
       final data = json.decode(responseBody);
+
+      // 2. 转换为数据模型
       final hospitalResponse = HospitalResponse.fromJson(data);
+
+      // 3. 检查返回结果是否为空
       if (hospitalResponse.returns.isEmpty) {
         throw Exception("编码不存在对应用户");
       }
 
-      return (hospitalResponse.returns as List).map<Location>((item) {
-        final name = item['Name']?.toString() ?? '未知地点';
+      // 4.直接访问 Return 对象的属性
+      return hospitalResponse.returns.map<Location>((returnItem) {
+        final name = returnItem.name;
         return Location(name);
       }).toList();
-    } on FormatException catch (e,stack) {
+
+    } on FormatException catch (e, stack) {
+      // 5. 处理 JSON 解析错误
       final errorDetails = logError(e, stack);
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('错误类型: ${errorDetails.errorType}'),
-          content: SingleChildScrollView(
-            child: Text(errorDetails.toString()),
+
+      // 6. 显示错误对话框（需确保 context 可用）
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('错误类型: ${errorDetails.errorType}'),
+            content: SingleChildScrollView(
+              child: Text(errorDetails.toString()),
+            ),
           ),
-        ),
-      );
+        );
+      }
+
+      // 7. 抛出封装后的异常
+      throw Exception(errorDetails);
+    } catch (e, stack) {
+      // 8. 捕获其他未知错误
+      final errorDetails = logError(e, stack);
       throw Exception(errorDetails);
     }
   }
@@ -308,6 +327,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WarmUpTheShader.warmUp(context);
     return Scaffold(
       appBar: AppBar(title: const Text('用户登录')),
       body: Padding(

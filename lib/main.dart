@@ -3,14 +3,13 @@ import 'menu.dart';
 import 'button_bar.dart';
 import 'main_content.dart';
 import 'login_screen.dart';
-import 'utils/shader_warmup.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
     Builder(
       builder: (context) {
         // 执行着色器预热
-        WarmUpTheShader.warmUp(context);
+      //  WarmUpTheShader.warmUp(context);
         return const MyApp();
       },
     ),

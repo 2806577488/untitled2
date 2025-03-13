@@ -142,7 +142,7 @@ class Return {
   String unionId;
   dynamic userName;
   int oralType;
-  int score;
+  double score;
   String accountName;
   String accountNum;
   String openingBank;
