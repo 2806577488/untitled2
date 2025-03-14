@@ -28,6 +28,7 @@ class WarmUpTheShader {
       });
     });
   }
+
   static void _warmUpDialogComponents(Canvas canvas, Size size) {
     // 预热对话框圆角
     final dialogRRect = RRect.fromRectAndRadius(
@@ -38,7 +39,7 @@ class WarmUpTheShader {
       ),
       const Radius.circular(12),
     );
-    canvas.drawPath(_rrectToPath(dialogRRect), Paint()..color=Colors.white);
+    canvas.drawPath(_rrectToPath(dialogRRect), Paint()..color = Colors.white);
 
     // 预热滚动条
     final scrollPaint = Paint()
@@ -51,6 +52,7 @@ class WarmUpTheShader {
       scrollPaint,
     );
   }
+
   static void _warmUpDropdown(Canvas canvas, Size size) {
     final paint = Paint();
 
@@ -92,11 +94,12 @@ class WarmUpTheShader {
     path.moveTo(rrect.left + rrect.tlRadiusX, rrect.top);
     path.arcTo(
       Rect.fromCircle(
-        center: Offset(rrect.left + rrect.tlRadiusX, rrect.top + rrect.tlRadiusY),
+        center:
+            Offset(rrect.left + rrect.tlRadiusX, rrect.top + rrect.tlRadiusY),
         radius: rrect.tlRadiusX,
       ),
-      -pi/2,
-      pi/2,
+      -pi / 2,
+      pi / 2,
       false,
     );
 
@@ -104,11 +107,12 @@ class WarmUpTheShader {
     path.lineTo(rrect.right - rrect.trRadiusX, rrect.top);
     path.arcTo(
       Rect.fromCircle(
-        center: Offset(rrect.right - rrect.trRadiusX, rrect.top + rrect.trRadiusY),
+        center:
+            Offset(rrect.right - rrect.trRadiusX, rrect.top + rrect.trRadiusY),
         radius: rrect.trRadiusX,
       ),
       0,
-      pi/2,
+      pi / 2,
       false,
     );
 
@@ -116,11 +120,12 @@ class WarmUpTheShader {
     path.lineTo(rrect.right, rrect.bottom - rrect.brRadiusY);
     path.arcTo(
       Rect.fromCircle(
-        center: Offset(rrect.right - rrect.brRadiusX, rrect.bottom - rrect.brRadiusY),
+        center: Offset(
+            rrect.right - rrect.brRadiusX, rrect.bottom - rrect.brRadiusY),
         radius: rrect.brRadiusX,
       ),
-      pi/2,
-      pi/2,
+      pi / 2,
+      pi / 2,
       false,
     );
 
@@ -128,11 +133,12 @@ class WarmUpTheShader {
     path.lineTo(rrect.left + rrect.blRadiusX, rrect.bottom);
     path.arcTo(
       Rect.fromCircle(
-        center: Offset(rrect.left + rrect.blRadiusX, rrect.bottom - rrect.blRadiusY),
+        center: Offset(
+            rrect.left + rrect.blRadiusX, rrect.bottom - rrect.blRadiusY),
         radius: rrect.blRadiusX,
       ),
       pi,
-      pi/2,
+      pi / 2,
       false,
     );
 
@@ -141,7 +147,7 @@ class WarmUpTheShader {
   }
 
   static void _warmUpButtons(Canvas canvas) {
-    const rect = Rect.fromLTWH(0,0,100,40);
+    const rect = Rect.fromLTWH(0, 0, 100, 40);
     final paint = Paint()
       ..color = Colors.blue
       ..style = PaintingStyle.fill;

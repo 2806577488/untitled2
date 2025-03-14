@@ -47,8 +47,6 @@ ErrorDetails logError(Object error, StackTrace stackTrace) {
   for (final frame in parsedFrames) {
     if (frame is! Frame) continue;
 
-
-
     // 生产环境解析
     final frameStr = frame.toString();
     final pattern = RegExp(r'\((.*?):(\d+):(\d+)\)');
@@ -59,14 +57,11 @@ ErrorDetails logError(Object error, StackTrace stackTrace) {
       lineNumber = int.tryParse(match.group(2) ?? '');
       columnNumber = int.tryParse(match.group(3) ?? '');
       if (filePath != null) break;
-    }
-    else
-    {
-        filePath = frame.uri.path;
-        lineNumber = frame.line;
-        columnNumber = frame.column;
-        break;
-
+    } else {
+      filePath = frame.uri.path;
+      lineNumber = frame.line;
+      columnNumber = frame.column;
+      break;
     }
   }
 

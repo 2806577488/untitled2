@@ -9,7 +9,6 @@ import 'package:untitled2/model/HospitalResponse.dart';
 import 'package:untitled2/tools/Error.dart';
 import 'package:untitled2/utils/customDialog.dart';
 import 'package:untitled2/utils/shader_warmup.dart';
-import 'widgets/optimized_dropdown.dart';
 
 class LoginScreen extends StatefulWidget {
   final Function(String, String, String) onLogin;
@@ -67,7 +66,6 @@ class _LoginScreenState extends State<LoginScreen> {
         final name = returnItem.name;
         return Location(name);
       }).toList();
-
     } on FormatException catch (e, stack) {
       // 5. 处理 JSON 解析错误
       final errorDetails = logError(e, stack);
@@ -146,9 +144,8 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         setState(() => _apiError = "请求失败 (${response.statusCode})");
       }
-    } catch (e,stack) {
+    } catch (e, stack) {
       final errorMsg = logError(e, stack);
-      //final errorMsg = e.toString().replaceAll('Exception:', '').trim();
 
       // 关键修改点2：使用await等待对话框关闭
       if (mounted) {
@@ -161,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
 
-      setState(() => _apiError =e.toString());
+      setState(() => _apiError = e.toString());
     } finally {}
     return;
   }
@@ -307,24 +304,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Widget _buildLocationDropdown() {
-    return OptimizedDropdown<Location>(
-      value: _selectedLocation,
-      hintText: '选择登入地点',
-      icon: const Icon(Icons.location_on),
-      menuMaxHeight: 180,
-      decoration: const InputDecoration(
-        border: OutlineInputBorder(),
-        contentPadding: EdgeInsets.symmetric(horizontal: 12),
-      ),
-      items: _loginLocation,
-      itemTextBuilder: (location) => location.name,
-      onChanged: (Location? newValue) {
-        setState(() => _selectedLocation = newValue);
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     WarmUpTheShader.warmUp(context);
@@ -403,8 +382,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       onChanged: (value) => _password = value,
                     ),
                     const SizedBox(height: 20),
-                    _buildLocationDropdown(),
-                    const SizedBox(height: 90),
+                    DropdownButtonFormField<Location>(
+                      value: _selectedLocation,
+                      hint: Text('选择登入地点'),
+                      icon: const Icon(Icons.location_on),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                      items: _loginLocation
+                          .map<DropdownMenuItem<Location>>((Location location) {
+                        return DropdownMenuItem<Location>(
+                          value: location,
+                          child: Text(location.name),
+                        );
+                      }).toList(),
+                      onChanged: (Location? newValue) {
+                        setState(() {
+                          _selectedLocation = newValue;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 30),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.login),
                       label: const Text('登录'),
@@ -414,12 +413,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         final success = await _submit(_userId, _password,
                             _selectedLocation!.name, 'hisType');
-                        setState(() => _isSubmitting = false);
+                        //  setState(() => _isSubmitting = false);
                         if (success) {
                           return;
-                        } else {
-
-                        }
+                        } else {}
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 50),

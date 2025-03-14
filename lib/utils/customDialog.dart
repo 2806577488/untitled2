@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum DialogButtonType {
-  singleConfirm,
-  confirmAndCancel
-}
+enum DialogButtonType { singleConfirm, confirmAndCancel }
 
 class CustomDialog extends StatelessWidget {
   final String title;
@@ -30,7 +27,8 @@ class CustomDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
         ),
         titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         actionsPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         title: Text(title),
         content: Column(
@@ -69,16 +67,17 @@ class CustomDialog extends StatelessWidget {
   }
 
   Widget _buildButtons(BuildContext context) {
-    return ButtonBar(
+    return OverflowBar(
       alignment: MainAxisAlignment.end,
-      buttonPadding: EdgeInsets.zero,
+      spacing: 8,
       children: buttonType == DialogButtonType.confirmAndCancel
           ? [
         _buildCancelButton(context),
-        const SizedBox(width: 8),
         _buildConfirmButton(context),
       ]
-          : [_buildConfirmButton(context)],
+          : [
+        _buildConfirmButton(context),
+      ],
     );
   }
 
@@ -124,7 +123,7 @@ class CustomDialog extends StatelessWidget {
     return showDialog<bool>(
       context: context,
       //barrierDismissible: false, // 禁用点击外部关闭
-      useRootNavigator: true,     // 使用根导航器
+      useRootNavigator: true, // 使用根导航器
       builder: (context) => CustomDialog(
         title: title,
         content: content,
