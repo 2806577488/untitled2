@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
@@ -203,17 +204,42 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {}
     return loginstatus;
   }
+  final FocusNode _userCodeFocusNode = FocusNode();
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     _loginLocation = [];
+    _userCodeFocusNode.addListener(() {
+      if (!_userCodeFocusNode.hasFocus) {
+        // 失焦时设置一个短暂的延迟
+        _debounceTimer?.cancel();
+        _debounceTimer = Timer(const Duration(milliseconds: 500), () async {
+          // 延迟后调用验证方法
+          String? currentValue = _userId;
+          await _validateUserCode(currentValue);
+          // 触发验证
+          _formKey.currentState?.validate();
+                });
+      } else {
+        // 重新聚焦时取消延迟
+        _debounceTimer?.cancel();
+      }
+    });
+
     _loadLastImagePath();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
     });
   }
-
+  @override
+  void dispose() {
+    _userCodeFocusNode.dispose();
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
   // 加载上次保存的图片路径
   Future<void> _loadLastImagePath() async {
     final prefs = await SharedPreferences.getInstance();
@@ -337,6 +363,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     TextFormField(
+                focusNode: _userCodeFocusNode,
                       decoration: const InputDecoration(
                         labelText: '工号',
                         prefixIcon: Icon(Icons.person),
@@ -425,10 +452,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
+
             ),
+
           ],
         ),
       ),
     );
+
   }
 }
