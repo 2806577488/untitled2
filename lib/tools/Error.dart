@@ -1,4 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:stack_trace/stack_trace.dart';
+
+import '../utils/customDialog.dart';
 
 // 错误信息数据类
 class ErrorDetails {
@@ -21,6 +24,7 @@ class ErrorDetails {
   @override
   String toString() {
     return '''
+
 ======= 错误报告 =======
 错误类型: $errorType
 错误信息: $errorMessage
@@ -32,6 +36,31 @@ $stackTrace
 =======================
 ''';
   }
+}
+/// 独立函数：记录错误并显示对话框
+String logAndShowError({
+  required BuildContext context,
+  required Object exception,
+  required StackTrace stackTrace,
+  required String title,
+  required bool mounted, // 由调用方传入当前组件的 mounted 状态
+}) {
+  // 记录错误并获取详细信息
+  final errorDetails = logError(exception, stackTrace);
+
+  // 仅在组件未卸载时显示对话框
+  if (mounted) {
+    CustomDialog.show(
+      context: context,
+      title: title,
+      content: errorDetails.toString(),
+      buttonType: DialogButtonType.singleConfirm,
+      onConfirm: () {}, // 空确认回调
+    );
+  }
+
+  // 返回错误详细信息字符串
+  return errorDetails.toString();
 }
 
 // 独立错误处理函数
@@ -46,8 +75,6 @@ ErrorDetails logError(Object error, StackTrace stackTrace) {
   for (final frame in parsedFrames) {
     if (frame is! Frame) continue;
 
-
-
     // 生产环境解析
     final frameStr = frame.toString();
     final pattern = RegExp(r'\((.*?):(\d+):(\d+)\)');
@@ -58,14 +85,11 @@ ErrorDetails logError(Object error, StackTrace stackTrace) {
       lineNumber = int.tryParse(match.group(2) ?? '');
       columnNumber = int.tryParse(match.group(3) ?? '');
       if (filePath != null) break;
-    }
-    else
-    {
-        filePath = frame.uri.path;
-        lineNumber = frame.line;
-        columnNumber = frame.column;
-        break;
-
+    } else {
+      filePath = frame.uri.path;
+      lineNumber = frame.line;
+      columnNumber = frame.column;
+      break;
     }
   }
 
