@@ -119,36 +119,28 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<bool> _getUserYLTLogin(
+  Future<User?> _getUserYLTLogin(
       String userCode,
       String password,
       String hospitalId,
       String hisType,
       ) async {
-    if (!mounted) return false;
+    if (!mounted) return null;
 
     setState(() {
       _apiError = null;
-      _loginLocation = [];
-      _selectedLocation = null;
     });
 
     try {
-      final locations = await UserAndHospitalService.userLogin(
+      final UserInfo = await UserAndHospitalService.userLogin(
         userCode,
         password,
         hospitalId,
         hisType,
       );
-      if (mounted) {
-        setState(() {
-          _loginLocation = locations;
-          _selectedLocation = locations.isNotEmpty ? locations.first : null;
-        });
-      }
-      return locations.isNotEmpty;
+      return UserInfo;
     } catch (e, stack) {
-      if (!mounted) return false;
+      if (!mounted) return null;
       final errorMsg = logAndShowError(
         context: context,
         exception: e,
@@ -157,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
         mounted: mounted,
       );
       setState(() => _apiError = errorMsg);
-      return false;
+      return null;
     }
   }
 
@@ -168,14 +160,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       setState(() => _isSubmitting = true);
-      final success = await _getUserYLTLogin(
+      final userinfo = await _getUserYLTLogin(
         _userId,
         _password,
         '1165', // 应替换为实际hospitalId
         '7',    // 应替换为实际hisType
       );
-
-      if (success) {
+      if (userinfo!=null) {
         widget.onLogin(_userId, _password, _selectedLocation!.name);
         return true;
       }
@@ -188,10 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
         title: "验证用户错误",
         mounted: mounted,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMsg)),
-      );
-      return false;
+      throw Exception(errorMsg);
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);

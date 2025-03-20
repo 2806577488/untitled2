@@ -26,7 +26,7 @@ class UserAndHospitalService {
       }
 
       return _parseHospitalResponse(response.body);
-    } catch (e, stack) {
+    } catch (e) {
       throw Exception('工号验证失败: ${e.toString()}');
     }
   }
@@ -55,7 +55,7 @@ class UserAndHospitalService {
   /// [password] 登录密码
   /// [hospitalId] 医院ID
   /// [hisType] HIS系统类型
-  static Future<List<Location>> userLogin(
+  static Future<User> userLogin(
       String userCode,
       String password,
       String hospitalId,
@@ -77,14 +77,14 @@ class UserAndHospitalService {
       }
 
       return _parseLoginResponse(response.body);
-    } catch (e, stack) {
+    } catch (e) {
       throw Exception('用户登录失败: ${e.toString()}');
     }
   }
 
   /// 解析登录响应
   /// [responseBody] HTTP响应内容
-  static List<Location> _parseLoginResponse(String responseBody) {
+  static User _parseLoginResponse(String responseBody) {
     try {
       final data = json.decode(responseBody);
 
@@ -93,9 +93,18 @@ class UserAndHospitalService {
         throw Exception(message);
       }
 
-      return (data['Returns'] as List).map<Location>((item) {
-        return Location(item['Name']?.toString() ?? '未知地点');
-      }).toList();
+      // 假设 data['Returns'] 是一个包含用户信息的对象
+      final userJson = data['Returns'];
+
+      // 创建 User 对象
+      User userInfo = User.fromJson(userJson);
+
+      // 检查用户信息是否有效
+      if (userInfo.name.isEmpty) {
+        throw Exception("用户信息无效");
+      }
+
+      return userInfo; // 返回解析后的用户信息
     } catch (e) {
       throw Exception("登录响应解析失败: ${e.toString()}");
     }
