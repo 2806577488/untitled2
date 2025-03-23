@@ -73,7 +73,6 @@ ErrorDetails logError(Object error, StackTrace stackTrace) {
   int? columnNumber;
 
   for (final frame in parsedFrames) {
-    if (frame is! Frame) continue;
 
     // 生产环境解析
     final frameStr = frame.toString();

@@ -76,6 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _onUserCodeFocusChange() {
+    _isSubmitting=false;
     if (!_userCodeFocusNode.hasFocus) {
       _debounceTimer?.cancel();
       _debounceTimer = Timer(const Duration(milliseconds: 500), () {
@@ -91,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _validateUserCode(String userCode) async {
     if (!mounted) return;
-
+    _isSubmitting=false;
     setState(() {
       _apiError = null;
       _loginLocation = [];
@@ -294,8 +295,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           labelText: '密码',
                           prefixIcon: Icon(Icons.lock),
                         ),
-                        validator: (value) =>
-                        value?.isEmpty ?? true ? '请输入密码' : null,
+                        validator: (value) {
+                          if (_isSubmitting) {
+                            if (value?.isEmpty ?? true) {
+                              return '请输入密码';
+                            }
+                          }
+                          return null;
+                        },
                         onChanged: (value) => _password = value,
                       ),
                       const SizedBox(height: 20),
@@ -316,8 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         icon: const Icon(Icons.login),
                         label: Text(_isSubmitting ? '登录中...' : '登录'),
                         onPressed: _isSubmitting ? null : () async {
-                          final success = await _submit();
-                          if (success) Navigator.pop(context);
+                           await _submit();
                         },
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
