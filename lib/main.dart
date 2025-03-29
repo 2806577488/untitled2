@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'login_screen.dart';
 import 'his_page.dart';
+import 'model/user_repository.dart';
 import 'pacs_page.dart';
 import 'lis_page.dart';
 import 'sales_page.dart';
@@ -8,10 +10,16 @@ import 'nursing_page.dart';
 import 'data_page.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider(create: (_) => UserRepository()), // 数据仓库
+       // Provider(create: (_) => ApiService()),     // 网络服务
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

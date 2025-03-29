@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:untitled2/public.dart';
 import 'package:untitled2/tools/Error.dart';
 import 'package:untitled2/utils/shader_warmup.dart';
 import 'action/getUserAndHospital.dart';
+import 'model/user_repository.dart';
 
 class LoginScreen extends StatefulWidget {
   final Function(String, String, String) onLogin;
@@ -167,9 +169,25 @@ class _LoginScreenState extends State<LoginScreen> {
         '1165', // 应替换为实际hospitalId
         '7',    // 应替换为实际hisType
       );
+
       if (userinfo!=null) {
-        widget.onLogin(_userId, _password, _selectedLocation!.name);
-        return true;
+        try {
+          final repo = context.read<UserRepository>();
+          repo.updateUser('basic', userinfo);
+          widget.onLogin(_userId, _password, _selectedLocation!.name);
+          return true;
+        }
+        catch(e,stack)
+        {
+          final errorMsg = logAndShowError(
+            context: context,
+            exception: e,
+            stackTrace: stack,
+            title: "解析用户信息错误",
+            mounted: mounted,
+          );
+          throw Exception(errorMsg);
+        }
       }
       return false;
     } catch (e, stack) {
