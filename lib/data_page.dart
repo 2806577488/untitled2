@@ -1,4 +1,6 @@
-import 'package:file_saver/file_saver.dart';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' hide Column;
 import 'package:flutter/foundation.dart';
@@ -76,47 +78,47 @@ class DataPage extends StatelessWidget {
       final html.Blob blob = html.Blob([bytes],
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       final html.AnchorElement anchor =
-          html.AnchorElement(href: html.Url.createObjectUrlFromBlob(blob))
-            ..setAttribute('download', '数据导入.xlsx');
+      html.AnchorElement(href: html.Url.createObjectUrlFromBlob(blob))
+        ..setAttribute('download', '数据导入.xlsx');
       anchor.click();
     } else {
-      try {
-        final result = await FileSaver.instance.saveFile(
-          name: "数据导入",
-          bytes: Uint8List.fromList(bytes),
-          ext: "xlsx",
-          mimeType: MimeType.microsoftExcel, // 使用正确的MIME类型
-        );
-      } catch (e) {}
-      ;
+      final String? savePath = await FilePicker.platform.saveFile(
+        dialogTitle: '请选择保存位置',
+        fileName: '数据导入.xlsx',
+        allowedExtensions: ['xlsx'],
+        type: FileType.custom,
+      );
+      if (savePath != null) {
+        final File file = File(savePath);
+        await file.writeAsBytes(bytes);
+      }
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('数据系统')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // 添加一个按钮，放在最左侧
-            ElevatedButton(
-              onPressed: () async {
-                await generateExcelTemplate();
-                // 提示用户文件已生成
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('数据导入模板已生成')),
-                );
-              },
-              child: const Text('数据导入生成'),
-            ),
-            Text('用户 ID: $userId'),
-            Text('登录地点: $loginLocation'),
-            const Text('这是数据系统界面'),
-          ],
-        ),
-      ),
-    );
-  }
 }
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(title: const Text('数据系统')),
+    body: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // 添加一个按钮，放在最左侧
+          ElevatedButton(
+            onPressed: () async {
+              await generateExcelTemplate();
+              // 提示用户文件已生成
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('数据导入模板已生成')),
+              );
+            },
+            child: const Text('数据导入生成'),
+          ),
+          Text('用户 ID: $userId'),
+          Text('登录地点: $loginLocation'),
+          const Text('这是数据系统界面'),
+        ],
+      ),
+    ),
+  );
+}}
