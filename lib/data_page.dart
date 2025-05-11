@@ -16,7 +16,7 @@ class DataPage extends StatelessWidget {
     required this.loginLocation,
   });
 
-  Future<void> generateExcelTemplate() async {
+  Future<bool> generateExcelTemplate() async {
     final Workbook workbook = Workbook();
     final Worksheet sheet = workbook.worksheets[0];
     sheet.name = "药品";
@@ -71,30 +71,55 @@ class DataPage extends StatelessWidget {
     sheet.getRangeByName('AU1').setText('批准文号');
 
     // 保存文件
+    final bool isSaved= await  saveExcel(
+      workbook: workbook,
+      defaultName: '数据导入模板',
+    );
+    return isSaved;
+  }
+
+  /// 保存Excel文件
+  static Future<bool> saveExcel({
+    required Workbook workbook,
+    String defaultName = '未命名文件',
+  }) async {
     final List<int> bytes = workbook.saveAsStream();
     //workbook.dispose();
-    if (kIsWeb) {
-      // Web环境下保存文件
-      final html.Blob blob = html.Blob([bytes],
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      final html.AnchorElement anchor =
-      html.AnchorElement(href: html.Url.createObjectUrlFromBlob(blob))
-        ..setAttribute('download', '数据导入.xlsx');
-      anchor.click();
-    } else {
-      final String? savePath = await FilePicker.platform.saveFile(
-        dialogTitle: '请选择保存位置',
-        fileName: '数据导入.xlsx',
-        allowedExtensions: ['xlsx'],
-        type: FileType.custom,
-      );
-      if (savePath != null) {
-        final File file = File(savePath);
-        await file.writeAsBytes(bytes);
-      }
-    }
-}
 
+    try {
+      if (kIsWeb) {
+        // Web端保存
+        final blob = html.Blob(
+            [bytes],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        final anchor = html.AnchorElement(
+            href: html.Url.createObjectUrlFromBlob(blob)
+        )
+          ..setAttribute('download', '$defaultName.xlsx');
+        anchor.click();
+        return true;
+      } else {
+        // 桌面端保存
+        final String? savePath = await FilePicker.platform.saveFile(
+          dialogTitle: '选择保存位置',
+          fileName: '$defaultName.xlsx',
+          allowedExtensions: ['xlsx'],
+          type: FileType.custom,
+        );
+
+        if (savePath != null) {
+          final file = File(savePath);
+          await file.writeAsBytes(bytes);
+          return true;
+        }
+        return false; // 用户取消保存
+      }
+    } catch (e) {
+      debugPrint('文件保存失败: $e');
+      rethrow;
+    }
+  }
 @override
 Widget build(BuildContext context) {
   return Scaffold(
@@ -106,11 +131,14 @@ Widget build(BuildContext context) {
           // 添加一个按钮，放在最左侧
           ElevatedButton(
             onPressed: () async {
-              await generateExcelTemplate();
+
+            bool isSaved= await generateExcelTemplate();
               // 提示用户文件已生成
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('数据导入模板已生成')),
-              );
+              if (isSaved) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('模板已生成并保存成功')),
+                );
+              }
             },
             child: const Text('数据导入生成'),
           ),
