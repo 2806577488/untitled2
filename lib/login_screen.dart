@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:untitled2/public.dart';
-import 'package:untitled2/tools/Error.dart';
-import 'package:untitled2/utils/shader_warmup.dart';
 import 'action/getUserAndHospital.dart';
 import 'model/user_repository.dart';
+import 'public.dart';
+import 'tools/Error.dart';
+import 'utils/shader_warmup.dart';
 
 class LoginScreen extends StatefulWidget {
   final Function(String, String, String) onLogin;
@@ -60,15 +60,37 @@ class _LoginScreenState extends State<LoginScreen> {
     _userCodeFocusNode.addListener(_onUserCodeFocusChange);
   }
 
+  /// 加载上次保存的背景图片路径
+  ///
+  /// 该方法用于在应用启动时恢复用户上次选择的背景图片，主要流程：
+  /// 1. 从本地持久化存储(SharedPreferences)中读取保存的图片路径
+  /// 2. 验证该路径对应的图片文件是否仍然存在
+  /// 3. 根据验证结果更新状态或清理无效存储
+  ///
+  /// 注意：
+  /// - 使用异步操作访问文件系统，需等待结果
+  /// - 如果文件已被删除，会自动清理无效记录
+  /// - 触发setState会更新UI显示最新图片
   Future<void> _loadLastImagePath() async {
+    // 获取共享偏好实例
     final prefs = await SharedPreferences.getInstance();
+
+    // 尝试读取上次保存的图片路径
     final savedPath = prefs.getString('lastImagePath');
 
-    if (savedPath != null && await File(savedPath).exists()) {
-      setState(() => _selectedImagePath = savedPath);
-    } else {
-      await prefs.remove('lastImagePath');
+    if (savedPath != null) {
+      // 验证文件是否存在（防止文件被外部删除）
+      final fileExists = await File(savedPath).exists();
+
+      if (fileExists) {
+        // 有效路径：更新状态显示图片
+        setState(() => _selectedImagePath = savedPath);
+      } else {
+        // 无效路径：清理无效记录
+        await prefs.remove('lastImagePath');
+      }
     }
+    // 无保存路径时不做任何操作
   }
 
   void _initSystemUI() {
@@ -296,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         validator: (value) {
                           if (value?.isEmpty ?? true) return '请输入工号';
-                          if (_apiError != null) return _apiError;
+                          //if (_apiError != null) return _apiError;
                           return null;
                         },
                         onChanged: (value) {
