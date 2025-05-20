@@ -20,7 +20,6 @@ class DataPage extends StatelessWidget {
     final Workbook workbook = Workbook();
     final Worksheet sheet = workbook.worksheets[0];
     sheet.name = "药品";
-
     // 只添加表头，不填充数据
     sheet.getRangeByName('A1').setText('医院内部编码');
     sheet.getRangeByName('B1').setText('项目名称');
