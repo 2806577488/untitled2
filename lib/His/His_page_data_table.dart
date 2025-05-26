@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'His_page_styles.dart';
+import 'his_page_styles.dart';
 
 class DataTableWidget extends StatefulWidget {
   final Future<List<dynamic>> dataFuture;
@@ -27,6 +27,7 @@ class _DataTableWidgetState extends State<DataTableWidget> {
   Map<int, TextEditingController> _pyCodeControllers = {};
   Map<int, TextEditingController> _wbCodeControllers = {};
   final int _padding = 3;
+  final Duration _animationDuration = const Duration(milliseconds: 300);
 
   @override
   void initState() {
@@ -166,14 +167,7 @@ class _DataTableWidgetState extends State<DataTableWidget> {
             ),
           ),
           Expanded(
-            child: Center(
-              child: Chip(
-                label: Text((province['IsActive'] as bool?) == true ? '启用' : '禁用'),
-                backgroundColor: (province['IsActive'] as bool?) == true
-                    ? Colors.green.shade100
-                    : Colors.red.shade100,
-              ),
-            ),
+            child: _buildStatusChip(province),
           ),
           Expanded(
             flex: 2,
@@ -197,7 +191,24 @@ class _DataTableWidgetState extends State<DataTableWidget> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete),
-                  onPressed: () => widget.onDelete(province),
+                  onPressed: () {
+                    // 在这里添加你的删除逻辑
+                    setState(() {
+                      if (_data != null && index < _data!.length) {
+                        // 1. 从数据集中移除对应数据
+                        _data?.removeAt(index);
+
+                        // 2. 从编辑控制器中移除对应控制器
+                        _rowEditing.remove(index);
+                        _nameControllers.remove(index);
+                        _codeControllers.remove(index);
+                        _pyCodeControllers.remove(index);
+                        _wbCodeControllers.remove(index);
+                      }
+                    });
+                    // 调用 onSave 回调，用于保存更改
+                    widget.onSave();
+                  },
                 ),
               ],
             ),
@@ -234,6 +245,34 @@ class _DataTableWidgetState extends State<DataTableWidget> {
           fillColor: Colors.yellow.shade100,
         ),
         style: const TextStyle(fontSize: 14),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(dynamic province) {
+    final isActive = province['IsActive'] as bool? ?? false;
+
+    return AnimatedSwitcher(
+      duration: _animationDuration,
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(opacity: animation, child: child);
+      },
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            province['IsActive'] = !isActive;
+          });
+          widget.onEdit(province);
+        },
+        child: Chip(
+          label: Text(
+            isActive ? '启用' : '禁用',
+            style: TextStyle(color: isActive ? Colors.green : Colors.red),
+          ),
+          backgroundColor: isActive ? Colors.green.shade100 : Colors.red.shade100,
+          // 添加唯一键以触发动画
+          key: ValueKey(isActive),
+        ),
       ),
     );
   }
