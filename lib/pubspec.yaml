@@ -40,6 +40,10 @@ dependencies:
   file_saver: ^0.2.14
   http: ^1.4.0
   flutter_hooks: ^0.21.2
+  redis: ^4.0.0
+  archive: ^3.3.0      # GZIP 压缩/解压
+  crypto: ^3.0.0       # 哈希计算
+  logger: ^1.0.0       # 日志记录
   flutter:
     sdk: flutter
 

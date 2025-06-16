@@ -15,48 +15,79 @@ class HisPage extends StatefulWidget {
 
 class _HisPageState extends State<HisPage> {
   int _selectedIndex = 0;
-  final List<String> _menuItems = ['基础表格', '项目字典维护', '组合套餐维护'];
-  final List<Widget> _pages = [
-    HisPageBaseTable(),
-    HisPageProjectDict(),
-    HisPageComboPackage(),
-  ];
 
-  void _handleMenuTap(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
+  final List<Widget> _pages = [
+    const HisPageBaseTable(),
+    const HisPageProjectDict(),
+    const HisPageComboPackage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('HIS 系统'),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(40), // 缩小表头高度
+        child: AppBar(
+          title: const Text('HIS 系统'),
+          centerTitle: true,
+          backgroundColor: const Color(0xFF1a2980),
+        ),
       ),
-      body: Row(
-        children: [
-          // 左侧菜单
-          Container(
-            width: 200,
-            color: Colors.grey.shade100,
-            child: ListView.builder(
-              itemCount: _menuItems.length,
-              itemBuilder: (context, index) => ListTile(
-                title: Text(_menuItems[index]),
-                selected: index == _selectedIndex,
-                selectedTileColor: Colors.blue.shade50,
-                selectedColor: Colors.blue.shade800,
-                onTap: () => _handleMenuTap(index),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1a2980), Color(0xFF26d0ce)],
+          ),
+        ),
+        child: Row(
+          children: [
+            // 左侧菜单 - 缩小宽度
+            Container(
+              width: 150,
+              color: Colors.grey.shade100.withOpacity(0.2),
+              child: ListView.builder(
+                itemCount: _pages.length,
+                itemBuilder: (context, index) => ListTile(
+                  title: Text(
+                    _getMenuItemTitle(index),
+                    style: TextStyle(
+                      color: index == _selectedIndex
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.8),
+                    ),
+                  ),
+                  selected: index == _selectedIndex,
+                  selectedTileColor: Colors.white.withOpacity(0.2),
+                  selectedColor: Colors.white,
+                  onTap: () => setState(() => _selectedIndex = index),
+                ),
               ),
             ),
-          ),
-          // 主内容区域
-          Expanded(
-            child: _pages[_selectedIndex],
-          ),
-        ],
+            // 主内容区域 - 占满剩余空间
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: _pages[_selectedIndex],
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  String _getMenuItemTitle(int index) {
+    switch (index) {
+      case 0: return '基础表格';
+      case 1: return '项目字典维护';
+      case 2: return '组合套餐维护';
+      default: return '未知菜单';
+    }
   }
 }
