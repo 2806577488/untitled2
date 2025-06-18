@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:redis/redis.dart';
-import 'package:path/path.dart' as path;
+import 'package:path/path.dart' as path show join;
 import 'package:path_provider/path_provider.dart';
 import 'package:crypto/crypto.dart';
 import 'package:logger/logger.dart';

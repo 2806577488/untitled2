@@ -20,6 +20,11 @@ class TreeView extends StatefulWidget {
 class _TreeViewState extends State<TreeView> {
   final Set<TreeNode> _expandedNodes = {};
 
+  // 创建带透明度的颜色
+  static Color _withOpacity(Color color, double opacity) {
+    return color.withAlpha((opacity * 255).round());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -41,11 +46,11 @@ class _TreeViewState extends State<TreeView> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1a2980).withOpacity(0.9),
+              color: _withOpacity(const Color(0xFF1a2980), 0.9), // 使用修复后的方法
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: const Text(
-              "基本表维护",
+              "用户信息基本表",
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,

@@ -22,11 +22,16 @@ class _HisPageState extends State<HisPage> {
     const HisPageComboPackage(),
   ];
 
+  // 创建带透明度的颜色
+  static Color _withOpacity(Color color, double opacity) {
+    return color.withAlpha((opacity * 255).round());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(40), // 缩小表头高度
+        preferredSize: const Size.fromHeight(40),
         child: AppBar(
           title: const Text('HIS 系统'),
           centerTitle: true,
@@ -43,10 +48,10 @@ class _HisPageState extends State<HisPage> {
         ),
         child: Row(
           children: [
-            // 左侧菜单 - 缩小宽度
+            // 左侧菜单
             Container(
-              width: 150,
-              color: Colors.grey.shade100.withOpacity(0.2),
+              width: 180,
+              color: _withOpacity(Colors.grey.shade100, 0.2), // 使用修复后的方法
               child: ListView.builder(
                 itemCount: _pages.length,
                 itemBuilder: (context, index) => ListTile(
@@ -59,18 +64,18 @@ class _HisPageState extends State<HisPage> {
                     ),
                   ),
                   selected: index == _selectedIndex,
-                  selectedTileColor: Colors.white.withOpacity(0.2),
+                  selectedTileColor: _withOpacity(Colors.white, 0.2), // 使用修复后的方法
                   selectedColor: Colors.white,
                   onTap: () => setState(() => _selectedIndex = index),
                 ),
               ),
             ),
-            // 主内容区域 - 占满剩余空间
+            // 主内容区域
             Expanded(
               child: Container(
                 margin: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: _withOpacity(Colors.white, 0.9), // 使用修复后的方法
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: _pages[_selectedIndex],

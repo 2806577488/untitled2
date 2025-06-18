@@ -52,6 +52,11 @@ class EditableTable extends StatefulWidget {
 class _EditableTableState extends State<EditableTable> {
   final Map<int, Map<String, TextEditingController>> _controllers = {};
 
+  // 创建带透明度的颜色
+  static Color _withOpacity(Color color, double opacity) {
+    return color.withAlpha((opacity * 255).round());
+  }
+
   @override
   void initState() {
     super.initState();
@@ -116,31 +121,30 @@ class _EditableTableState extends State<EditableTable> {
     required String hintText,
     required String value,
     required int rowId,
-    int flex = 1,
+    double? width,
   }) {
-    return Expanded(
-      flex: flex,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: const Color(0xFFe0e0e0),
-            width: 1,
-          ),
+    return Container(
+      width: width,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFe0e0e0),
+          width: 1,
         ),
-        child: isEditing
-            ? TextField(
-          controller: _controllers[rowId]![controllerKey],
-          decoration: InputDecoration.collapsed(
-            hintText: hintText,
-          ),
-        )
-            : Text(
-          value,
-          style: const TextStyle(fontSize: 16),
+      ),
+      child: isEditing
+          ? TextField(
+        controller: _controllers[rowId]![controllerKey],
+        decoration: InputDecoration.collapsed(
+          hintText: hintText,
         ),
+      )
+          : Text(
+        value,
+        style: const TextStyle(fontSize: 16),
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -179,13 +183,13 @@ class _EditableTableState extends State<EditableTable> {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1a2980).withOpacity(0.9),
+                color: _withOpacity(const Color(0xFF1a2980), 0.9), // 使用修复后的方法
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Row(
                 children: [
-                  Expanded(
-                    flex: 2,
+                  SizedBox(
+                    width: 120,
                     child: Text(
                         '省份',
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -210,8 +214,8 @@ class _EditableTableState extends State<EditableTable> {
                         '状态',
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
-                  Expanded(
-                    flex: 2,
+                  SizedBox(
+                    width: 140,
                     child: Text(
                       '操作',
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -256,48 +260,60 @@ class _EditableTableState extends State<EditableTable> {
                       padding: const EdgeInsets.all(12.0),
                       child: Row(
                         children: [
-                          _buildCell(
-                            isEditing: isEditing,
-                            controllerKey: 'name',
-                            hintText: '输入省份',
-                            value: row.name,
-                            rowId: row.id,
-                            flex: 2,
+                          SizedBox(
+                            width: 120,
+                            child: _buildCell(
+                              isEditing: isEditing,
+                              controllerKey: 'name',
+                              hintText: '输入省份',
+                              value: row.name,
+                              rowId: row.id,
+                            ),
                           ),
 
-                          const SizedBox(width: 12),
-
-                          _buildCell(
-                            isEditing: isEditing,
-                            controllerKey: 'code',
-                            hintText: '输入编码',
-                            value: row.code,
-                            rowId: row.id,
-                          ),
-
-                          const SizedBox(width: 12),
-
-                          _buildCell(
-                            isEditing: isEditing,
-                            controllerKey: 'pyCode',
-                            hintText: '输入拼音码',
-                            value: row.pyCode,
-                            rowId: row.id,
-                          ),
-
-                          const SizedBox(width: 12),
-
-                          _buildCell(
-                            isEditing: isEditing,
-                            controllerKey: 'wbCode',
-                            hintText: '输入五笔码',
-                            value: row.wbCode,
-                            rowId: row.id,
-                          ),
-
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
 
                           Expanded(
+                            flex: 1,
+                            child: _buildCell(
+                              isEditing: isEditing,
+                              controllerKey: 'code',
+                              hintText: '输入编码',
+                              value: row.code,
+                              rowId: row.id,
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          Expanded(
+                            flex: 1,
+                            child: _buildCell(
+                              isEditing: isEditing,
+                              controllerKey: 'pyCode',
+                              hintText: '输入拼音码',
+                              value: row.pyCode,
+                              rowId: row.id,
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          Expanded(
+                            flex: 1,
+                            child: _buildCell(
+                              isEditing: isEditing,
+                              controllerKey: 'wbCode',
+                              hintText: '输入五笔码',
+                              value: row.wbCode,
+                              rowId: row.id,
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          SizedBox(
+                            width: 80,
                             child: GestureDetector(
                               onTap: () {
                                 setState(() {
@@ -331,14 +347,13 @@ class _EditableTableState extends State<EditableTable> {
                             ),
                           ),
 
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
 
-                          Expanded(
-                            flex: 2,
+                          SizedBox(
+                            width: 140,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // 修改/保存按钮 - 修复位置参数问题
                                 Container(
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
@@ -347,7 +362,7 @@ class _EditableTableState extends State<EditableTable> {
                                     borderRadius: BorderRadius.circular(8),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.blue.withOpacity(0.3),
+                                        color: _withOpacity(Colors.blue, 0.3), // 使用修复后的方法
                                         blurRadius: 6,
                                         offset: const Offset(0, 3),
                                       ),
@@ -357,6 +372,7 @@ class _EditableTableState extends State<EditableTable> {
                                     icon: Icon(
                                       isEditing ? Icons.save : Icons.edit,
                                       color: Colors.white,
+                                      size: 20,
                                     ),
                                     onPressed: () {
                                       if (isEditing) {
@@ -375,9 +391,8 @@ class _EditableTableState extends State<EditableTable> {
                                   ),
                                 ),
 
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 8),
 
-                                // 删除按钮 - 修复位置参数问题
                                 Container(
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
@@ -386,14 +401,14 @@ class _EditableTableState extends State<EditableTable> {
                                     borderRadius: BorderRadius.circular(8),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.red.withOpacity(0.3),
+                                        color: _withOpacity(Colors.red, 0.3), // 使用修复后的方法
                                         blurRadius: 6,
                                         offset: const Offset(0, 3),
                                       ),
                                     ],
                                   ),
                                   child: IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.white),
+                                    icon: const Icon(Icons.delete, color: Colors.white, size: 20),
                                     onPressed: () => widget.onDelete(row.id),
                                   ),
                                 ),
@@ -411,7 +426,7 @@ class _EditableTableState extends State<EditableTable> {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1a2980).withOpacity(0.9),
+                color: _withOpacity(const Color(0xFF1a2980), 0.9), // 使用修复后的方法
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
               ),
               child: Row(
