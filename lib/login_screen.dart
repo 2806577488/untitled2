@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // 焦点相关
   final FocusNode _userCodeFocusNode = FocusNode();
   Timer? _debounceTimer;
-
+  bool _isValidating = false;
   @override
   void initState() {
     super.initState();
@@ -100,27 +100,28 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _onUserCodeFocusChange() {
-    _isSubmitting=false;
     if (!_userCodeFocusNode.hasFocus) {
-      _debounceTimer?.cancel();
+      _debounceTimer?.cancel(); // 取消上一个计时器
+
+      // 延迟500ms进行验证，确保用户输入停止一段时间
       _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-        if (mounted && _userId.isNotEmpty) {
-          _validateUserCode(_userId);
-          _formKey.currentState?.validate();
+        if (mounted && _userId.isNotEmpty && !_isValidating) {
+          _validateUserCode(_userId);  // 调用校验方法
         }
       });
     } else {
-      _debounceTimer?.cancel();
+      _debounceTimer?.cancel();  // 焦点获取时取消当前计时器，避免在输入中断时校验
     }
   }
 
   Future<void> _validateUserCode(String userCode) async {
     if (!mounted) return;
-    _isSubmitting=false;
+
     setState(() {
       _apiError = null;
       _loginLocation = [];
       _selectedLocation = null;
+      _isValidating = true; // 开始验证
     });
 
     try {
@@ -141,10 +142,17 @@ class _LoginScreenState extends State<LoginScreen> {
         mounted: mounted,
       );
       setState(() => _apiError = errorMsg);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isValidating = false; // 校验完成
+        });
+      }
     }
   }
 
-  Future<User?> _getUserYLTLogin(
+
+    Future<User?> _getUserYLTLogin(
       String userCode,
       String password,
       String hospitalId,
