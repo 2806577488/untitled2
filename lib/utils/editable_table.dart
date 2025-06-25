@@ -1,39 +1,17 @@
 import 'package:flutter/material.dart';
-
-class TableRowData {
-  final int id;
-  String name;
-  String code;
-  String pyCode;
-  String wbCode;
-  bool isActive;
-  bool isEditing;
-  Map<String, String> originalValues;
-
-  TableRowData({
-    required this.id,
-    required this.name,
-    required this.code,
-    required this.pyCode,
-    required this.wbCode,
-    this.isActive = true,
-    this.isEditing = false,
-    Map<String, String>? originalValues,
-  }) : originalValues = originalValues ?? {
-    'name': name,
-    'code': code,
-    'pyCode': pyCode,
-    'wbCode': wbCode,
-  };
-}
+import '../models/table_column_config.dart';
+import '../models/table_row_data.dart';
 
 class EditableTable extends StatefulWidget {
   final List<TableRowData> data;
   final Function(int id) onEdit;
   final Function(int id) onDelete;
-  final Function(int id, String name, String code, String pyCode, String wbCode, bool isActive) onSave;
+  final Function(TableRowData row) onSave;
   final Function() onAddNew;
   final String title;
+  final List<TableColumnConfig> columns;
+  final Color? headerColor;
+  final Color? footerColor;
 
   const EditableTable({
     Key? key,
@@ -43,6 +21,9 @@ class EditableTable extends StatefulWidget {
     required this.onSave,
     required this.onAddNew,
     required this.title,
+    required this.columns,
+    this.headerColor,
+    this.footerColor,
   }) : super(key: key);
 
   @override
@@ -70,26 +51,38 @@ class _EditableTableState extends State<EditableTable> {
   }
 
   void _initRowControllers(TableRowData row) {
-    _controllers[row.id] = {
-      'name': TextEditingController(text: row.name),
-      'code': TextEditingController(text: row.code),
-      'pyCode': TextEditingController(text: row.pyCode),
-      'wbCode': TextEditingController(text: row.wbCode),
-    };
+    _controllers[row.id] = {};
+    for (final column in widget.columns) {
+      _controllers[row.id]![column.key] = TextEditingController(
+          text: row.getValue(column.key).toString()
+      );
+    }
   }
 
   @override
   void didUpdateWidget(EditableTable oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    // 更新控制器
     for (var row in widget.data) {
       if (!_controllers.containsKey(row.id)) {
         _initRowControllers(row);
+      } else {
+        // 更新现有行的控制器值
+        for (final column in widget.columns) {
+          final controller = _controllers[row.id]![column.key];
+          if (controller != null &&
+              controller.text != row.getValue(column.key).toString()) {
+            controller.text = row.getValue(column.key).toString();
+          }
+        }
       }
     }
 
+    // 移除不再存在的行的控制器
     final currentIds = widget.data.map((r) => r.id).toSet();
-    final toRemove = _controllers.keys.where((id) => !currentIds.contains(id)).toList();
+    final toRemove = _controllers.keys.where((id) => !currentIds.contains(id))
+        .toList();
     for (var id in toRemove) {
       _removeRowControllers(id);
     }
@@ -123,6 +116,8 @@ class _EditableTableState extends State<EditableTable> {
     required int rowId,
     double? width,
   }) {
+    final controller = _controllers[rowId]?[controllerKey];
+
     return Container(
       width: width,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
@@ -136,21 +131,27 @@ class _EditableTableState extends State<EditableTable> {
       ),
       child: isEditing
           ? TextField(
-        controller: _controllers[rowId]![controllerKey],
+        controller: controller,
         decoration: InputDecoration.collapsed(
           hintText: hintText,
+          hintStyle: TextStyle(color: Colors.grey.shade400),
         ),
+        style: const TextStyle(fontSize: 16),
       )
           : Text(
         value,
         style: const TextStyle(fontSize: 16),
         overflow: TextOverflow.ellipsis,
+        maxLines: 1,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final headerColor = widget.headerColor ?? const Color(0xFF1a2980);
+    final footerColor = widget.footerColor ?? const Color(0xFF1a2980);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -169,56 +170,52 @@ class _EditableTableState extends State<EditableTable> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 表格标题
             Padding(
               padding: const EdgeInsets.only(bottom: 20),
               child: Text(
                 widget.title,
                 style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1a2980)),
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1a2980),
+                ),
               ),
             ),
 
+            // 表头区域
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
-                color: _withOpacity(const Color(0xFF1a2980), 0.9), // 使用修复后的方法
+                color: _withOpacity(headerColor, 0.9),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  SizedBox(
-                    width: 120,
+                  // 配置列
+                  for (final column in widget.columns)
+                    _buildHeaderCell(column),
+
+                  // 状态列
+                  const Expanded(
                     child: Text(
-                        '省份',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      '状态',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold
+                      ),
+                    ),
                   ),
-                  Expanded(
-                    child: Text(
-                        '编码',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                  Expanded(
-                    child: Text(
-                        '拼音码',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                  Expanded(
-                    child: Text(
-                        '五笔码',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                  Expanded(
-                    child: Text(
-                        '状态',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                  SizedBox(
+
+                  // 操作列
+                  const SizedBox(
                     width: 140,
                     child: Text(
                       '操作',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -228,6 +225,7 @@ class _EditableTableState extends State<EditableTable> {
 
             const SizedBox(height: 10),
 
+            // 数据行
             Expanded(
               child: ListView.builder(
                 itemCount: widget.data.length,
@@ -260,161 +258,15 @@ class _EditableTableState extends State<EditableTable> {
                       padding: const EdgeInsets.all(12.0),
                       child: Row(
                         children: [
-                          SizedBox(
-                            width: 120,
-                            child: _buildCell(
-                              isEditing: isEditing,
-                              controllerKey: 'name',
-                              hintText: '输入省份',
-                              value: row.name,
-                              rowId: row.id,
-                            ),
-                          ),
+                          // 配置列
+                          for (final column in widget.columns)
+                            _buildDataCell(column, row),
 
-                          const SizedBox(width: 8),
+                          // 状态列
+                          _buildStatusCell(row),
 
-                          Expanded(
-                            flex: 1,
-                            child: _buildCell(
-                              isEditing: isEditing,
-                              controllerKey: 'code',
-                              hintText: '输入编码',
-                              value: row.code,
-                              rowId: row.id,
-                            ),
-                          ),
-
-                          const SizedBox(width: 8),
-
-                          Expanded(
-                            flex: 1,
-                            child: _buildCell(
-                              isEditing: isEditing,
-                              controllerKey: 'pyCode',
-                              hintText: '输入拼音码',
-                              value: row.pyCode,
-                              rowId: row.id,
-                            ),
-                          ),
-
-                          const SizedBox(width: 8),
-
-                          Expanded(
-                            flex: 1,
-                            child: _buildCell(
-                              isEditing: isEditing,
-                              controllerKey: 'wbCode',
-                              hintText: '输入五笔码',
-                              value: row.wbCode,
-                              rowId: row.id,
-                            ),
-                          ),
-
-                          const SizedBox(width: 8),
-
-                          SizedBox(
-                            width: 80,
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  row.isActive = !row.isActive;
-                                  widget.onSave(
-                                      row.id,
-                                      row.name,
-                                      row.code,
-                                      row.pyCode,
-                                      row.wbCode,
-                                      row.isActive
-                                  );
-                                });
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: row.isActive ? Colors.green.shade100 : Colors.red.shade100,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    row.isActive ? '启用' : '禁用',
-                                    style: TextStyle(
-                                        color: row.isActive ? Colors.green : Colors.red,
-                                        fontWeight: FontWeight.bold
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(width: 8),
-
-                          SizedBox(
-                            width: 140,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFF3498db), Color(0xFF2980b9)],
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: _withOpacity(Colors.blue, 0.3), // 使用修复后的方法
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: IconButton(
-                                    icon: Icon(
-                                      isEditing ? Icons.save : Icons.edit,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                    onPressed: () {
-                                      if (isEditing) {
-                                        widget.onSave(
-                                            row.id,
-                                            _controllers[row.id]!['name']!.text,
-                                            _controllers[row.id]!['code']!.text,
-                                            _controllers[row.id]!['pyCode']!.text,
-                                            _controllers[row.id]!['wbCode']!.text,
-                                            row.isActive
-                                        );
-                                      } else {
-                                        widget.onEdit(row.id);
-                                      }
-                                    },
-                                  ),
-                                ),
-
-                                const SizedBox(width: 8),
-
-                                Container(
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFFe74c3c), Color(0xFFc0392b)],
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: _withOpacity(Colors.red, 0.3), // 使用修复后的方法
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.white, size: 20),
-                                    onPressed: () => widget.onDelete(row.id),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          // 操作列
+                          _buildActionCell(row),
                         ],
                       ),
                     ),
@@ -423,11 +275,13 @@ class _EditableTableState extends State<EditableTable> {
               ),
             ),
 
+            // 底部区域
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
               decoration: BoxDecoration(
-                color: _withOpacity(const Color(0xFF1a2980), 0.9), // 使用修复后的方法
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                color: _withOpacity(footerColor, 0.9),
+                borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(12)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -452,7 +306,8 @@ class _EditableTableState extends State<EditableTable> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
                     ),
                   ),
                 ],
@@ -460,6 +315,155 @@ class _EditableTableState extends State<EditableTable> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderCell(TableColumnConfig column) {
+    return column.width != null
+        ? SizedBox(
+      width: column.width,
+      child: Text(
+        column.title,
+        style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold
+        ),
+      ),
+    )
+        : Expanded(
+      flex: 1,
+      child: Text(
+        column.title,
+        style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDataCell(TableColumnConfig column, TableRowData row) {
+    return column.width != null
+        ? SizedBox(
+      width: column.width,
+      child: _buildCell(
+        isEditing: row.isEditing && column.isEditable,
+        controllerKey: column.key,
+        hintText: column.hint,
+        value: row.getValue(column.key).toString(),
+        rowId: row.id,
+        width: column.width,
+      ),
+    )
+        : Expanded(
+      flex: 1,
+      child: _buildCell(
+        isEditing: row.isEditing && column.isEditable,
+        controllerKey: column.key,
+        hintText: column.hint,
+        value: row.getValue(column.key).toString(),
+        rowId: row.id,
+      ),
+    );
+  }
+
+  Widget _buildStatusCell(TableRowData row) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            row.isActive = !row.isActive;
+            widget.onSave(row);
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: row.isActive ? Colors.green.shade100 : Colors.red.shade100,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              row.isActive ? '启用' : '禁用',
+              style: TextStyle(
+                  color: row.isActive ? Colors.green : Colors.red,
+                  fontWeight: FontWeight.bold
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionCell(TableRowData row) {
+    return SizedBox(
+      width: 140,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // 编辑/保存按钮
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF3498db), Color(0xFF2980b9)],
+              ),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: _withOpacity(Colors.blue, 0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: Icon(
+                row.isEditing ? Icons.save : Icons.edit,
+                color: Colors.white,
+                size: 20,
+              ),
+              onPressed: () {
+                if (row.isEditing) {
+                  // 保存时更新所有字段的值
+                  for (final column in widget.columns) {
+                    final controller = _controllers[row.id]![column.key];
+                    if (controller != null) {
+                      row.setValue(column.key, controller.text);
+                    }
+                  }
+                  widget.onSave(row);
+                } else {
+                  widget.onEdit(row.id);
+                }
+              },
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // 删除按钮
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFe74c3c), Color(0xFFc0392b)],
+              ),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: _withOpacity(Colors.red, 0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.delete, color: Colors.white, size: 20),
+              onPressed: () => widget.onDelete(row.id),
+            ),
+          ),
+        ],
       ),
     );
   }
