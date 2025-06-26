@@ -33,7 +33,10 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
         _usageData = usage;
 
         // 安全处理空列表
-        final allIds = [..._provinceData.map((e) => e.id), ..._usageData.map((e) => e.id)];
+        final allIds = [
+          ..._provinceData.map((e) => e.id),
+          ..._usageData.map((e) => e.id)
+        ];
         if (allIds.isNotEmpty) {
           _nextId = allIds.reduce((a, b) => a > b ? a : b) + 1;
         } else {
@@ -62,13 +65,22 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
     TableColumnConfig(key: "PrintName", title: "简称", hint: "请输入简称"),
     TableColumnConfig(
       key: "LsUseArea",
-      title: "使用范围",
-      hint: "请选择使用范围",
+      title: "可用范围",
+      hint: "请选择可用范围",
       valueMap: {
         '1': '门诊',
         '2': '住院',
         '3': '共用',
-      },// 添加下拉选项
+      },
+    ),
+    TableColumnConfig(
+      key: "LsPrnFormType",
+      title: "药房分类单打印类别",
+      hint: "请指定口服/注射打印",
+      valueMap: {
+        '1': '口服药单',
+        '2': '针剂汇总单',
+      },
     ),
   ];
 
@@ -123,7 +135,10 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
   Widget _buildDataContent() {
     return Container(
       constraints: BoxConstraints(
-        minHeight: MediaQuery.of(context).size.height - 100,
+        minHeight: MediaQuery
+            .of(context)
+            .size
+            .height - 100,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -199,7 +214,9 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
     if (row.values.containsKey('LsUseArea')) {
       final value = row.values['LsUseArea'];
       if (value is String && value.contains('-')) {
-        row.values['LsUseArea'] = value.split('-').first;
+        row.values['LsUseArea'] = value
+            .split('-')
+            .first;
       }
     }
     print('保存用法数据: ${row.values}');

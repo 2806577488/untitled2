@@ -229,7 +229,7 @@ class _EditableTableState extends State<EditableTable> {
       // 使用Center确保内容垂直居中
       child: Center(
         child: isEditing && column.isEditable
-            ? _buildEditableField(column, controller, value)
+            ? _buildEditableField(column, controller, value,rowId)
             : _buildDisplayField(column, displayValue),
       ),
     );
@@ -239,6 +239,7 @@ class _EditableTableState extends State<EditableTable> {
       TableColumnConfig column,
       TextEditingController? controller,
       String value,
+      int rowId,
       ) {
     if (controller == null) return const SizedBox();
 
@@ -249,11 +250,10 @@ class _EditableTableState extends State<EditableTable> {
         controller.text = safeValue!;
       }
 
-      // 统一高度的下拉框
       return SizedBox(
-        height: 36, // 固定高度
+        height: 36,
         child: _CustomDropdown(
-          value: safeValue,
+          value: controller.text,
           items: column.valueMap!.entries.map((entry) {
             return DropdownMenuItem<String>(
               value: entry.key,
@@ -265,7 +265,22 @@ class _EditableTableState extends State<EditableTable> {
           }).toList(),
           onChanged: (newValue) {
             if (newValue != null) {
+              // 1. 更新控制器值
               controller.text = newValue;
+
+              // 2. 找到当前行
+              final rowIndex = widget.data.indexWhere((r) => r.id == rowId);
+              if (rowIndex != -1) {
+                final row = widget.data[rowIndex];
+
+                // 3. 更新行数据
+                row.setValue(column.key, newValue);
+
+                // 4. 调用保存回调
+                //widget.onSave(row);
+              }
+
+              // 5. 刷新UI
               setState(() {});
             }
           },
