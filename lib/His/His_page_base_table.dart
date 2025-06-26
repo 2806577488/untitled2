@@ -60,7 +60,16 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
     TableColumnConfig(key: "PyCode", title: "拼音码", hint: "请输入拼音码"),
     TableColumnConfig(key: "WbCode", title: "五笔码", hint: "请输入五笔码"),
     TableColumnConfig(key: "PrintName", title: "简称", hint: "请输入简称"),
-    TableColumnConfig(key: "LsUseArea",title: "使用范围",hint: "")
+    TableColumnConfig(
+      key: "LsUseArea",
+      title: "使用范围",
+      hint: "请选择使用范围",
+      valueMap: {
+        '1': '门诊',
+        '2': '住院',
+        '3': '共用',
+      },// 添加下拉选项
+    ),
   ];
 
   @override
@@ -187,6 +196,12 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
   }
 
   void _handleSaveUsage(TableRowData row) {
+    if (row.values.containsKey('LsUseArea')) {
+      final value = row.values['LsUseArea'];
+      if (value is String && value.contains('-')) {
+        row.values['LsUseArea'] = value.split('-').first;
+      }
+    }
     print('保存用法数据: ${row.values}');
     setState(() => row.isEditing = false);
   }
