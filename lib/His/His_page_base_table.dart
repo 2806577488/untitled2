@@ -100,6 +100,12 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
       isBooleanColumn: true, // 设置为布尔类型
       hint: '',
     ),
+    TableColumnConfig(
+      key: "IsPrintAst",
+      title: "是否打印肝功能化验单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
   ];
 
 
@@ -109,7 +115,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          Container(
+          SizedBox(
             width: 220,
             child: TreeView(
               nodes: _createTreeData(),

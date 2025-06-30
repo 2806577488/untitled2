@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'His/His_page_main.dart';
 import 'login_screen.dart';
 import 'model/user_repository.dart';
@@ -8,18 +9,43 @@ import 'lis_page.dart';
 import 'sales_page.dart';
 import 'nursing_page.dart';
 import 'data_page.dart';
+import 'package:window_manager/window_manager.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await windowManager.ensureInitialized();
+
+  // 👇 获取主显示器信息
+  final display = await screenRetriever.getPrimaryDisplay();
+  final screenSize = display.size; // e.g., Size(1920, 1080)
+
+  // 👇 设置窗口选项为主屏大小
+  WindowOptions windowOptions = WindowOptions(
+    size: screenSize,
+    center: true, // 其实已经是全屏了，center 也可忽略
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.normal,
+  );
+
+  // 👇 初始化窗口（不再强制 maximize，因为你手动给了屏幕尺寸）
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
+
+  // 启动主程序
   runApp(
     MultiProvider(
       providers: [
-        Provider(create: (_) => UserRepository()), // 数据仓库
-       // Provider(create: (_) => ApiService()),     // 网络服务
+        Provider(create: (_) => UserRepository()),
       ],
       child: const MyApp(),
     ),
   );
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

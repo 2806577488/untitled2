@@ -42,19 +42,22 @@ class _TreeViewState extends State<TreeView> {
       padding: const EdgeInsets.all(8),
       child: Column(
         children: [
-          // 标题区域
+          // 标题区域，背景颜色占满整个宽度，文本居中
           Container(
+            width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
-              color: _withOpacity(const Color(0xFF1a2980), 0.9), // 使用修复后的方法
+              color: _withOpacity(const Color(0xFF1a2980), 0.9),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             ),
-            child: const Text(
-              "用户信息基本表",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+            child: const Center(
+              child: Text(
+                "用户信息基本表",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
           ),
@@ -71,6 +74,7 @@ class _TreeViewState extends State<TreeView> {
               ),
             ),
           ),
+
         ],
       ),
     );

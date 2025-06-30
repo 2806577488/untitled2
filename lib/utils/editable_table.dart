@@ -61,36 +61,86 @@ class _CustomDropdown extends StatefulWidget {
 }
 
 class __CustomDropdownState extends State<_CustomDropdown> {
+  // 用于存储最大文本宽度
+  double _maxTextWidth = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // 在下一帧计算最大文本宽度
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _calculateMaxTextWidth();
+    });
+  }
+
+  // 计算所有选项文本的最大宽度
+  void _calculateMaxTextWidth() {
+    double maxWidth = 0;
+    final textStyle = const TextStyle(fontSize: 16);
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+    );
+
+    if (widget.items != null) {
+      for (final item in widget.items!) {
+        if (item.child is Text) {
+          final text = (item.child as Text).data ?? '';
+          textPainter.text = TextSpan(text: text, style: textStyle);
+          textPainter.layout();
+          if (textPainter.width > maxWidth) {
+            maxWidth = textPainter.width;
+          }
+        }
+      }
+    }
+
+    // 添加一些内边距 (左右各16像素)
+    setState(() {
+      _maxTextWidth = maxWidth + 32;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return DropdownButton<String>(
-      value: widget.value,
-      isExpanded: true,
-      icon: const Icon(Icons.arrow_drop_down, size: 20),
-      iconEnabledColor: Colors.grey,
-      underline: Container(),
-      style: const TextStyle(fontSize: 16, color: Colors.black, height: 1.0),
-      onChanged: widget.onChanged,
-      items: widget.items,
-      selectedItemBuilder: (BuildContext context) {
-        return widget.items!.map((item) {
-          String text = '';
-          if (item.child is Text) {
-            text = (item.child as Text).data ?? '';
-          }
-          // 完美居中的下拉框文本
-          return SizedBox(
-            height: 36, // 固定高度
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                text,
-                style: const TextStyle(fontSize: 16, height: 1.0),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          );
-        }).toList();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 使用计算的最大宽度，但不超过可用空间
+        final double width = _maxTextWidth > 0
+            ? _maxTextWidth.clamp(0, constraints.maxWidth)
+            : constraints.maxWidth;
+
+        return SizedBox(
+          width: width,
+          child: DropdownButton<String>(
+            value: widget.value,
+            isExpanded: true,
+            icon: const Icon(Icons.arrow_drop_down, size: 20),
+            iconEnabledColor: Colors.grey,
+            underline: Container(),
+            style: const TextStyle(fontSize: 16, color: Colors.black, height: 1.0),
+            onChanged: widget.onChanged,
+            items: widget.items,
+            selectedItemBuilder: (BuildContext context) {
+              return widget.items!.map((item) {
+                String text = '';
+                if (item.child is Text) {
+                  text = (item.child as Text).data ?? '';
+                }
+                return SizedBox(
+                  height: 36,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      text,
+                      style: const TextStyle(fontSize: 16, height: 1.0),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                );
+              }).toList();
+            },
+          ),
+        );
       },
     );
   }

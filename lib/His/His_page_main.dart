@@ -34,7 +34,7 @@ class _HisPageState extends State<HisPage> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(40),
         child: AppBar(
-          title: const Text('HIS 系统'),
+          title: const Text('HIS 系统',style: TextStyle(color: Colors.white),),
           centerTitle: true,
           backgroundColor: const Color(0xFF1a2980),
         ),

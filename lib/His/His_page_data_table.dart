@@ -13,7 +13,7 @@ class DataTableWidget extends StatelessWidget {
   final Function() onAddNew;
 
   const DataTableWidget({
-    Key? key,
+    super.key,
     required this.data,
     required this.title,
     required this.columns,
@@ -21,7 +21,7 @@ class DataTableWidget extends StatelessWidget {
     required this.onDelete,
     required this.onSave,
     required this.onAddNew,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
