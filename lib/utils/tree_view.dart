@@ -5,6 +5,16 @@ class TreeNode {
   final List<TreeNode> children;
 
   TreeNode({required this.title, this.children = const []});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is TreeNode &&
+              runtimeType == other.runtimeType &&
+              title == other.title;
+
+  @override
+  int get hashCode => title.hashCode;
 }
 
 class TreeView extends StatefulWidget {
