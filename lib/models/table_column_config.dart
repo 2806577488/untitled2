@@ -7,6 +7,7 @@ class TableColumnConfig {
   final Type valueType; // 添加字段类型
   final List<String>? dropdownItems; // 新增下拉框选项
   final Map<String, String>? valueMap; // 值映射表
+  final bool isBooleanColumn;
   String getDisplayValue(String rawValue) {
     if (valueMap != null && valueMap!.containsKey(rawValue)) {
       return valueMap![rawValue]!;
@@ -23,5 +24,6 @@ class TableColumnConfig {
     this.valueType=String,
     this.dropdownItems, // 新增
     this.valueMap,
+    this.isBooleanColumn = false, // 默认是 false
   });
 }

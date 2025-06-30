@@ -23,7 +23,7 @@ class EditableTable extends StatefulWidget {
   final Color? footerColor;
 
   const EditableTable({
-    Key? key,
+    super.key,
     required this.data,
     required this.onEdit,
     required this.onDelete,
@@ -33,7 +33,7 @@ class EditableTable extends StatefulWidget {
     required this.columns,
     this.headerColor,
     this.footerColor,
-  }) : super(key: key);
+  });
 
   @override
   _EditableTableState createState() => _EditableTableState();
@@ -51,11 +51,10 @@ class _CustomDropdown extends StatefulWidget {
   final ValueChanged<String?>? onChanged;
 
   const _CustomDropdown({
-    Key? key,
     this.value,
     this.items,
     this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   __CustomDropdownState createState() => __CustomDropdownState();
@@ -228,12 +227,48 @@ class _EditableTableState extends State<EditableTable> {
       ),
       // 使用Center确保内容垂直居中
       child: Center(
-        child: isEditing && column.isEditable
-            ? _buildEditableField(column, controller, value,rowId)
+        child: column.isBooleanColumn
+            ? _buildBooleanField(column, value, rowId)
+            : isEditing && column.isEditable
+            ? _buildEditableField(column, controller, value, rowId)
             : _buildDisplayField(column, displayValue),
       ),
     );
   }
+  Widget _buildBooleanField(
+      TableColumnConfig column,
+      String value,
+      int rowId,
+      ) {
+    final bool currentValue = value.toLowerCase() == 'true';
+    final rowIndex = widget.data.indexWhere((r) => r.id == rowId);
+    final row = widget.data[rowIndex];
+    final isEditing = row.isEditing;
+
+    return GestureDetector(
+      onTap: isEditing
+          ? () {
+        final newValue = !currentValue;
+
+        // 更新 controller
+        final controller = _controllers[rowId]?[column.key];
+        controller?.text = newValue.toString();
+
+        // 更新数据模型
+        row.setValue(column.key, newValue.toString());
+
+        setState(() {});
+      }
+          : null, // 非编辑状态不响应点击
+      child: Icon(
+        currentValue ? Icons.check : Icons.clear,
+        color: currentValue ? Colors.green : Colors.red,
+        size: 20, // 尽量小巧美观
+      ),
+    );
+  }
+
+
 
   Widget _buildEditableField(
       TableColumnConfig column,
@@ -242,18 +277,79 @@ class _EditableTableState extends State<EditableTable> {
       int rowId,
       ) {
     if (controller == null) return const SizedBox();
+    if (column.isBooleanColumn) {
+      bool currentValue = value.toLowerCase() == 'true'; // 根据传入值判断 true 或 false
 
+      return Row(
+        children: [
+          Row(
+            children: [
+              // 单选按钮: true
+              Radio<bool>(
+                value: true,
+                groupValue: currentValue,
+                onChanged: (bool? newValue) {
+                  if (newValue != null) {
+                    // 1. 更新控制器值
+                    controller.text = newValue.toString();
+                    // 2. 找到当前行
+                    final rowIndex = widget.data.indexWhere((r) => r.id == rowId);
+                    if (rowIndex != -1) {
+                      final row = widget.data[rowIndex];
+
+                      // 3. 更新行数据
+                      row.setValue(column.key, newValue.toString());
+
+                      // 4. 刷新UI
+                      setState(() {});
+                    }
+                  }
+                },
+              ),
+              const Text('True'), // 可以显示 True 的标签
+            ],
+          ),
+          Row(
+            children: [
+              // 单选按钮: false
+              Radio<bool>(
+                value: false,
+                groupValue: currentValue,
+                onChanged: (bool? newValue) {
+                  if (newValue != null) {
+                    // 1. 更新控制器值
+                    controller.text = newValue.toString();
+                    // 2. 找到当前行
+                    final rowIndex = widget.data.indexWhere((r) => r.id == rowId);
+                    if (rowIndex != -1) {
+                      final row = widget.data[rowIndex];
+
+                      // 3. 更新行数据
+                      row.setValue(column.key, newValue.toString());
+
+                      // 4. 刷新UI
+                      setState(() {});
+                    }
+                  }
+                },
+              ),
+              const Text('False'), // 显示 False 的标签
+            ],
+          ),
+        ],
+      );
+    }
     if (column.valueMap != null && column.valueMap!.isNotEmpty) {
       String? safeValue = value;
       if (!column.valueMap!.containsKey(value)) {
         safeValue = column.valueMap!.keys.first;
-        controller.text = safeValue!;
+        controller.text = safeValue;
       }
 
       return SizedBox(
         height: 36,
         child: _CustomDropdown(
-          value: controller.text,
+          value: controller.text,  // 修改为 `controller.text`，直接绑定文本框的值
           items: column.valueMap!.entries.map((entry) {
             return DropdownMenuItem<String>(
               value: entry.key,
@@ -277,7 +373,7 @@ class _EditableTableState extends State<EditableTable> {
                 row.setValue(column.key, newValue);
 
                 // 4. 调用保存回调
-                //widget.onSave(row);
+                // widget.onSave(row);
               }
 
               // 5. 刷新UI
@@ -287,6 +383,7 @@ class _EditableTableState extends State<EditableTable> {
         ),
       );
     }
+
 
     // 完美居中的文本框
     return TextField(
@@ -508,7 +605,7 @@ class _EditableTableState extends State<EditableTable> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: (0.2 * 255).toInt().toDouble()),
             blurRadius: 15,
             spreadRadius: 2,
             offset: const Offset(0, 10),
@@ -599,7 +696,7 @@ class _EditableTableState extends State<EditableTable> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: (0.2 * 255).toDouble()),
                           blurRadius: 6,
                           offset: const Offset(0, 3),
                         ),

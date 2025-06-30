@@ -82,7 +82,26 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
         '2': '针剂汇总单',
       },
     ),
+    TableColumnConfig(
+      key: "IsPrintLabel",
+      title: "是否打印瓶签",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsPrintReject",
+      title: "是否打印注射单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsPrintDrug",
+      title: "是否打印口服药单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
   ];
+
 
   @override
   Widget build(BuildContext context) {
