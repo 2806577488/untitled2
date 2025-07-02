@@ -21,6 +21,7 @@ class EditableTable extends StatefulWidget {
   final List<TableColumnConfig> columns;
   final Color? headerColor;
   final Color? footerColor;
+  final Map<int, GlobalKey>? rowKeys;
 
   const EditableTable({
     super.key,
@@ -32,7 +33,7 @@ class EditableTable extends StatefulWidget {
     required this.title,
     required this.columns,
     this.headerColor,
-    this.footerColor,
+    this.footerColor, this.rowKeys,
   });
 
   @override
@@ -155,7 +156,6 @@ class __CustomDropdownState extends State<_CustomDropdown> {
 class _EditableTableState extends State<EditableTable> {
   // 文本控制器映射 [rowId: [columnKey: controller]]
   final Map<int, Map<String, TextEditingController>> _controllers = {};
-
   // ==================================================
   // 颜色工具方法开始
   // ==================================================
@@ -267,6 +267,7 @@ class _EditableTableState extends State<EditableTable> {
     final displayValue = column.getDisplayValue(value);
 
     return Container(
+
       width: column.width,
       height: 36, // 统一高度为48dp
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -732,6 +733,7 @@ class _EditableTableState extends State<EditableTable> {
                   final isEditing = row.isEditing;
 
                   return Container(
+                    key: widget.rowKeys?[row.id],
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
                       color: isEditing

@@ -51,7 +51,7 @@ class _HisPageState extends State<HisPage> {
           children: [
             // 左侧菜单
             Container(
-              width: 180,
+              width: 120,
               color: _withOpacity(Colors.grey.shade100, 0.2), // 使用修复后的方法
               child: ListView.builder(
                 itemCount: _pages.length,

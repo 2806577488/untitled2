@@ -36,6 +36,26 @@ Future<List<TableRowData>> fetchProvinceData() async {
     throw Exception('数据加载失败: $e');
   }
 }
+Future<void> saveBsUsageToServer(Map<String, dynamic> bsUsageData) async {
+  final response = await http.post(
+    Uri.parse('https://doctor.xyhis.com/Api/NewYLTBackstage/PostCallInterface'),
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: {
+      'tokencode': '8ab6c803f9a380df2796315cad1b4280',
+      'DocumentElement': 'SaveBsUsage',
+      'operationType':'0',
+      'bsUsage':jsonEncode(bsUsageData)
+    },
+  );
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> data = jsonDecode(response.body);
+    if (data['IsSuccess']==true){
+      return;
+    }
+  }
+  throw Exception('请求失败: ${response.statusCode}');
+}
+
 Future<List<TableRowData>> getUsage() async {
   try {
     final response = await http.post(

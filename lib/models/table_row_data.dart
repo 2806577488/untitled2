@@ -23,7 +23,9 @@ class TableRowData {
     );
   }
 
-  dynamic getValue(String key) => values[key];
+  dynamic getValue(String key) {
+    return values.containsKey(key) && values[key] != null ? values[key] : '';
+  }
 
   void setValue(String key, dynamic value) {
     values[key] = value;

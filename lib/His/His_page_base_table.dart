@@ -13,6 +13,9 @@ class HisPageBaseTable extends StatefulWidget {
 }
 
 class _HisPageBaseTableState extends State<HisPageBaseTable> {
+  final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> _rowKeys = {};
+  int? _newlyInsertedId;
   String? _selectedNodeTitle;
   List<TableRowData> _provinceData = [];
   List<TableRowData> _usageData = [];
@@ -58,7 +61,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
 
   // 用法列配置
   final List<TableColumnConfig> _usageColumns = [
-    TableColumnConfig(key: "Name", title: "用法名称", hint: "请输入用法名称"),
+    TableColumnConfig(key: "Name", title: "用法名称", hint: "请输入用法名称",width:120),
     TableColumnConfig(key: "Code", title: "编码", hint: "请输入编码"),
     TableColumnConfig(key: "PyCode", title: "拼音码", hint: "请输入拼音码"),
     TableColumnConfig(key: "WbCode", title: "五笔码", hint: "请输入五笔码"),
@@ -103,6 +106,72 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
     TableColumnConfig(
       key: "IsPrintAst",
       title: "是否打印肝功能化验单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsPrintCure",
+      title: "是否打印治疗单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsPrintNurse",
+      title: "是否打印护理单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsPrintExternal",
+      title: "是否打印外用单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsPrintPush",
+      title: "是否打印静推单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsPrintRejSkin",
+      title: "是否打印皮下注射单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsPrintRejSkin",
+      title: "是否打印饮食单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsPrintDietetic",
+      title: "是否打印饮食单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsMzDrop",
+      title: "是否打印门诊输液单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsMzReject",
+      title: "是否打印门诊注射单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsMzCure",
+      title: "是否打印门诊治疗单",
+      isBooleanColumn: true, // 设置为布尔类型
+      hint: '',
+    ),
+    TableColumnConfig(
+      key: "IsPrintAtomization",
+      title: "是否打印雾化单",
       isBooleanColumn: true, // 设置为布尔类型
       hint: '',
     ),
@@ -236,16 +305,24 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
   }
 
   void _handleSaveUsage(TableRowData row) {
-    if (row.values.containsKey('LsUseArea')) {
-      final value = row.values['LsUseArea'];
-      if (value is String && value.contains('-')) {
-        row.values['LsUseArea'] = value
-            .split('-')
-            .first;
+
+      if (row.values.containsKey('LsUseArea')) {
+        final value = row.values['LsUseArea'];
+        if (value is String && value.contains('-')) {
+          row.values['LsUseArea'] = value
+              .split('-')
+              .first;
+        }
       }
-    }
-    print('保存用法数据: ${row.values}');
-    setState(() => row.isEditing = false);
+      try {
+        final Map<String, dynamic> usageData = row.values;
+
+        saveBsUsageToServer(usageData);
+      }
+      catch(ex){print(ex);}
+      //print('保存用法数据: ${row.values}');
+      setState(() => row.isEditing = false);
+
   }
 
   void _handleAddNewProvince() {
@@ -259,12 +336,37 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
   }
 
   void _handleAddNewUsage() {
+    final hasUnsaved = _usageData.any((row) => row.isEditing);
+    if (hasUnsaved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请先保存当前编辑的行')),
+      );
+      return;
+    }
+
+    final newId = _nextId++;
+
     setState(() {
+      _rowKeys[newId] = GlobalKey();
       _usageData.add(TableRowData(
-        id: _nextId++,
-        values: {"UsageName": "新用法"},
+        id: newId,
+        values: {},
         isEditing: true,
       ));
+      _newlyInsertedId = newId;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final key = _rowKeys[_newlyInsertedId];
+      if (key?.currentContext != null) {
+        Scrollable.ensureVisible(
+          key!.currentContext!,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
     });
   }
+
+
 }
