@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'action/getUserAndHospital.dart';
+import 'action/get_user_and_hospital.dart';
 import 'model/user_repository.dart';
 import 'public.dart';
 import 'tools/Error.dart';
@@ -114,6 +114,19 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// 统一的错误处理方法
+  void _handleError(dynamic error, StackTrace stack, String title) {
+    if (!mounted) return;
+    final errorMsg = logAndShowError(
+      context: context,
+      exception: error,
+      stackTrace: stack,
+      title: title,
+      mounted: mounted,
+    );
+    setState(() => _apiError = errorMsg);
+  }
+
   Future<void> _validateUserCode(String userCode) async {
     if (!mounted) return;
 
@@ -121,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _apiError = null;
       _loginLocation = [];
       _selectedLocation = null;
-      _isValidating = true; // 开始验证
+      _isValidating = true;
     });
 
     try {
@@ -133,20 +146,10 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     } catch (e, stack) {
-      if (!mounted) return;
-      final errorMsg = logAndShowError(
-        context: context,
-        exception: e,
-        stackTrace: stack,
-        title: '操作失败',
-        mounted: mounted,
-      );
-      setState(() => _apiError = errorMsg);
+      _handleError(e, stack, '操作失败');
     } finally {
       if (mounted) {
-        setState(() {
-          _isValidating = false; // 校验完成
-        });
+        setState(() => _isValidating = false);
       }
     }
   }
@@ -160,9 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ) async {
     if (!mounted) return null;
 
-    setState(() {
-      _apiError = null;
-    });
+    setState(() => _apiError = null);
 
     try {
       final UserInfo = await UserAndHospitalService.userLogin(
@@ -173,15 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       return UserInfo;
     } catch (e, stack) {
-      if (!mounted) return null;
-      final errorMsg = logAndShowError(
-        context: context,
-        exception: e,
-        stackTrace: stack,
-        title: "用户登录错误",
-        mounted: mounted,
-      );
-      setState(() => _apiError = errorMsg);
+      _handleError(e, stack, "用户登录错误");
       return null;
     }
   }
@@ -193,42 +186,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       setState(() => _isSubmitting = true);
-      final userinfo = await _getUserYLTLogin(
+      final userInfo = await _getUserYLTLogin(
         _userId,
         _password,
-        '1165', // 应替换为实际hospitalId
-        '7',    // 应替换为实际hisType
+        _selectedLocation!.hospitalId,
+        '7',    // TODO: 从配置或API获取hisType
       );
 
-      if (userinfo!=null) {
+      if (userInfo != null) {
         try {
           final repo = context.read<UserRepository>();
-          repo.updateUser('basic', userinfo);
+          repo.updateUser('basic', userInfo);
           widget.onLogin(_userId, _password, _selectedLocation!.name);
           return true;
-        }
-        catch(e,stack)
-        {
-          final errorMsg = logAndShowError(
-            context: context,
-            exception: e,
-            stackTrace: stack,
-            title: "解析用户信息错误",
-            mounted: mounted,
-          );
-          throw Exception(errorMsg);
+        } catch (e, stack) {
+          _handleError(e, stack, "解析用户信息错误");
+          return false;
         }
       }
       return false;
     } catch (e, stack) {
-      final errorMsg = logAndShowError(
-        context: context,
-        exception: e,
-        stackTrace: stack,
-        title: "验证用户错误",
-        mounted: mounted,
-      );
-      throw Exception(errorMsg);
+      _handleError(e, stack, "验证用户错误");
+      return false;
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);

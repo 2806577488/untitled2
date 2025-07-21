@@ -1,18 +1,35 @@
 class Location {
   final String name;
+  final String hospitalId;
 
-  Location(this.name);
+  Location({required this.name, required this.hospitalId});
+
+  factory Location.fromJson(Map<String, dynamic> json) {
+    return Location(
+      name: json['name'] ?? '',
+      hospitalId: json['hospitalId'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'hospitalId': hospitalId,
+    };
+  }
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
           other is Location &&
               runtimeType == other.runtimeType &&
-              name == other.name;
+              name == other.name &&
+              hospitalId == other.hospitalId;
 
   @override
-  int get hashCode => name.hashCode;
+  int get hashCode => name.hashCode ^ hospitalId.hashCode;
 }
+
 class User {
   final String name;
   final String guid;

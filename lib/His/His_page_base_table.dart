@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import '../models/table_column_config.dart';
 import '../models/table_row_data.dart';
-import '../utils/tree_view.dart' show TreeView, TreeNode; // 显式导入 TreeNode
+import '../utils/tree_view.dart' show TreeView, TreeNode;
+import '../utils/editable_table.dart';
+import '../tools/Error.dart';
 import 'His_page_data.dart';
 import 'His_page_data_table.dart';
+
+// 简单的调试输出函数
+void _debugPrint(String message) {
+  print('🔍 DEBUG: $message');
+}
 
 class HisPageBaseTable extends StatefulWidget {
   const HisPageBaseTable({super.key});
@@ -29,8 +36,14 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
 
   Future<void> _loadData() async {
     try {
+      _debugPrint('开始加载数据...');
+      
       final province = await fetchProvinceData();
+      _debugPrint('省份数据加载完成: ${province.length} 条');
+      
       final usage = await getUsage();
+      _debugPrint('用法数据加载完成: ${usage.length} 条');
+      
       setState(() {
         _provinceData = province;
         _usageData = usage;
@@ -45,9 +58,19 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
         } else {
           _nextId = 1;
         }
+        
+        _debugPrint('数据加载完成 - 省份: ${_provinceData.length} 条, 用法: ${_usageData.length} 条');
       });
-    } catch (e) {
-      print('加载数据错误: $e');
+    } catch (e, stack) {
+      if (context.mounted) {
+        GlobalErrorHandler.logAndShowError(
+          context: context,
+          exception: e,
+          stackTrace: stack,
+          title: '数据加载失败',
+          mounted: mounted,
+        );
+      }
     }
   }
 
@@ -61,7 +84,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
 
   // 用法列配置
   final List<TableColumnConfig> _usageColumns = [
-    TableColumnConfig(key: "Name", title: "用法名称", hint: "请输入用法名称",width:120),
+    TableColumnConfig(key: "Name", title: "用法名称", hint: "请输入用法名称", width: 120),
     TableColumnConfig(key: "Code", title: "编码", hint: "请输入编码"),
     TableColumnConfig(key: "PyCode", title: "拼音码", hint: "请输入拼音码"),
     TableColumnConfig(key: "WbCode", title: "五笔码", hint: "请输入五笔码"),
@@ -88,95 +111,88 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
     TableColumnConfig(
       key: "IsPrintLabel",
       title: "是否打印瓶签",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsPrintReject",
       title: "是否打印注射单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsPrintDrug",
       title: "是否打印口服药单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsPrintAst",
       title: "是否打印肝功能化验单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsPrintCure",
       title: "是否打印治疗单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsPrintNurse",
       title: "是否打印护理单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsPrintExternal",
       title: "是否打印外用单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsPrintPush",
       title: "是否打印静推单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsPrintRejSkin",
       title: "是否打印皮下注射单",
-      isBooleanColumn: true, // 设置为布尔类型
-      hint: '',
-    ),
-    TableColumnConfig(
-      key: "IsPrintRejSkin",
-      title: "是否打印饮食单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsPrintDietetic",
       title: "是否打印饮食单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsMzDrop",
       title: "是否打印门诊输液单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsMzReject",
       title: "是否打印门诊注射单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsMzCure",
       title: "是否打印门诊治疗单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
     TableColumnConfig(
       key: "IsPrintAtomization",
       title: "是否打印雾化单",
-      isBooleanColumn: true, // 设置为布尔类型
+      isBooleanColumn: true,
       hint: '',
     ),
   ];
-
 
   @override
   Widget build(BuildContext context) {
@@ -198,7 +214,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
     );
   }
 
-  // 添加缺失的树数据创建方法
+  // 创建树形数据
   List<TreeNode> _createTreeData() {
     return [
       TreeNode(title: "用户信息基本表", children: [
@@ -220,26 +236,23 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
     ];
   }
 
-  // 添加缺失的节点选择处理方法
+  // 处理节点选择
   void _handleNodeSelected(TreeNode node) {
     setState(() => _selectedNodeTitle = node.title);
   }
 
-  // 添加缺失的数据内容构建方法
+  // 构建数据内容区域
   Widget _buildDataContent() {
     return Container(
       constraints: BoxConstraints(
-        minHeight: MediaQuery
-            .of(context)
-            .size
-            .height - 100,
+        minHeight: MediaQuery.of(context).size.height - 100,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: _withOpacity(Colors.black, 0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -251,7 +264,12 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
     );
   }
 
-  // 添加缺失的数据表格构建方法
+  // 创建带透明度的颜色
+  static Color _withOpacity(Color color, double opacity) {
+    return color.withAlpha((opacity * 255).round());
+  }
+
+  // 构建数据表格
   Widget _buildDataTable() {
     switch (_selectedNodeTitle) {
       case "省份":
@@ -264,7 +282,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
   }
 
   Widget _buildProvinceTable() {
-    return DataTableWidget(
+    return EditableTable(
       data: _provinceData,
       title: "省份数据",
       columns: _provinceColumns,
@@ -276,7 +294,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
   }
 
   Widget _buildUsageTable() {
-    return DataTableWidget(
+    return EditableTable(
       data: _usageData,
       title: "用法数据",
       columns: _usageColumns,
@@ -296,33 +314,48 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
 
   void _handleDelete(int id, List<TableRowData> dataList) {
     setState(() => dataList.removeWhere((row) => row.id == id));
-    print('删除行: $id');
+    GlobalErrorHandler.logErrorOnly('删除行: $id', StackTrace.current);
   }
 
   void _handleSaveProvince(TableRowData row) {
-    print('保存省份数据: ${row.values}');
+    GlobalErrorHandler.logErrorOnly('保存省份数据: ${row.values}', StackTrace.current);
     setState(() => row.isEditing = false);
   }
 
-  void _handleSaveUsage(TableRowData row) {
-
-      if (row.values.containsKey('LsUseArea')) {
-        final value = row.values['LsUseArea'];
-        if (value is String && value.contains('-')) {
-          row.values['LsUseArea'] = value
-              .split('-')
-              .first;
-        }
+  void _handleSaveUsage(TableRowData row) async {
+    if (row.values.containsKey('LsUseArea')) {
+      final value = row.values['LsUseArea'];
+      if (value is String && value.contains('-')) {
+        row.values['LsUseArea'] = value.split('-').first;
       }
-      try {
-        final Map<String, dynamic> usageData = row.values;
-
-        saveBsUsageToServer(usageData);
+    }
+    
+    try {
+      final Map<String, dynamic> usageData = row.values;
+      await saveBsUsageToServer(usageData);
+      
+      // 保存成功
+      if (context.mounted) {
+        GlobalErrorHandler.showSuccess(
+          context: context,
+          message: '用法数据保存成功',
+          mounted: mounted,
+        );
       }
-      catch(ex){print(ex);}
-      //print('保存用法数据: ${row.values}');
-      setState(() => row.isEditing = false);
-
+    } catch (e, stack) {
+      if (context.mounted) {
+        GlobalErrorHandler.logAndShowError(
+          context: context,
+          exception: e,
+          stackTrace: stack,
+          title: '保存用法数据失败',
+          mounted: mounted,
+        );
+      }
+      return; // 保存失败时不关闭编辑状态
+    }
+    
+    setState(() => row.isEditing = false);
   }
 
   void _handleAddNewProvince() {
@@ -338,9 +371,14 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
   void _handleAddNewUsage() {
     final hasUnsaved = _usageData.any((row) => row.isEditing);
     if (hasUnsaved) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先保存当前编辑的行')),
-      );
+      if (context.mounted) {
+        GlobalErrorHandler.showSimpleError(
+          context: context,
+          message: '请先保存当前编辑的行',
+          title: '提示',
+          mounted: mounted,
+        );
+      }
       return;
     }
 
@@ -367,6 +405,4 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
       }
     });
   }
-
-
-}
+} 

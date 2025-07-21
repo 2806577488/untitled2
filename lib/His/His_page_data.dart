@@ -1,59 +1,135 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
 import '../models/table_row_data.dart';
+import '../tools/Error.dart';
 
-//获取省份数据
+// 简单的调试输出函数
+void _debugPrint(String message) {
+  print('🔍 DEBUG: $message');
+}
+
 Future<List<TableRowData>> fetchProvinceData() async {
   try {
+    _debugPrint('开始请求省份数据...');
+    
     final response = await http.post(
       Uri.parse('https://doctor.xyhis.com/Api/NewYLTBackstage/PostCallInterface'),
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
       body: {
         'tokencode': '8ab6c803f9a380df2796315cad1b4280',
         'DocumentElement': 'GetBsAreaProvinceAll',
+        "hospitalId": "1165",
+        "histype": "0",
       },
     );
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
-
-      if (data.containsKey('Returns') && data['Returns'] is List) {
-        final List<dynamic> rawList = data['Returns'];
-
-        // 将原始数据转换为 TableRowData 对象
-        return rawList.map((item) {
-          return TableRowData.fromJson(item);
-        }).toList();
-      } else {
-        print('无效的 Returns 数据类型: ${data['Returns']?.runtimeType}');
-        return [];
+      _debugPrint('省份接口响应状态: ${response.statusCode}');
+      _debugPrint('省份接口返回数据: $data');
+      
+      if (data.containsKey('Returns')) {
+        final returnsData = data['Returns'];
+        _debugPrint('Returns 类型: ${returnsData.runtimeType}');
+        _debugPrint('Returns 内容: $returnsData');
+        
+        if (returnsData is List) {
+          final result = returnsData.map((item) => TableRowData.fromJson(item)).toList();
+          _debugPrint('解析后的省份数据: ${result.length} 条');
+          return result;
+        } else if (returnsData is Map) {
+          // 检查 'ReturnT' 字段
+          if (returnsData.containsKey('ReturnT') && returnsData['ReturnT'] is List) {
+            final List<dynamic> rawList = returnsData['ReturnT'];
+            final result = rawList.map((item) => TableRowData.fromJson(item)).toList();
+            _debugPrint('从 ReturnT 解析的省份数据: ${result.length} 条');
+            return result;
+          }
+        }
       }
+      
+      _debugPrint('警告: 无法解析省份数据，返回空列表');
+      return [];
+    } else {
+      throw Exception('请求失败: ${response.statusCode}');
     }
-    throw Exception('请求失败: ${response.statusCode}');
-  } catch (e) {
-    print('数据加载失败: $e');
-    throw Exception('数据加载失败: $e');
+  } catch (e, stack) {
+    GlobalErrorHandler.logErrorOnly(e, stack);
+    throw Exception('省份数据加载失败: $e');
   }
 }
+
 Future<void> saveBsUsageToServer(Map<String, dynamic> bsUsageData) async {
-  final response = await http.post(
-    Uri.parse('https://doctor.xyhis.com/Api/NewYLTBackstage/PostCallInterface'),
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: {
-      'tokencode': '8ab6c803f9a380df2796315cad1b4280',
-      'DocumentElement': 'SaveBsUsage',
-      'operationType':'0',
-      'bsUsage':jsonEncode(bsUsageData)
-    },
-  );
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> data = jsonDecode(response.body);
-    if (data['IsSuccess']==true){
-      return;
+  try {
+    _debugPrint('开始保存用法数据: $bsUsageData');
+    
+    final response = await http.post(
+      Uri.parse('https://doctor.xyhis.com/Api/NewYLTBackstage/PostCallInterface'),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {
+        'tokencode': '8ab6c803f9a380df2796315cad1b4280',
+        'DocumentElement': 'SaveBsUsage',
+        'operationType': '0',
+        'bsUsage': jsonEncode(bsUsageData)
+      },
+    );
+    
+    _debugPrint('保存用法接口响应状态: ${response.statusCode}');
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      _debugPrint('保存用法接口返回数据: $data');
+      
+      // 检查是否有嵌套的 Returns 字段
+      Map<String, dynamic>? actualResult;
+      if (data.containsKey('Returns') && data['Returns'] is Map<String, dynamic>) {
+        actualResult = data['Returns'] as Map<String, dynamic>;
+        _debugPrint('发现嵌套的 Returns 字段: $actualResult');
+      } else {
+        actualResult = data;
+      }
+      
+      // 使用实际的结果数据
+      if (actualResult['IsSuccess'] == true) {
+        _debugPrint('用法数据保存成功');
+        return;
+      } else {
+        // API 返回失败，提供详细的错误信息
+        final errorMsg = actualResult['Message']?.toString() ?? actualResult['ErrorMsg']?.toString() ?? actualResult['ShowMsg']?.toString() ?? '';
+        final warningMsg = actualResult['WarningMsg']?.toString() ?? '';
+        final errorCode = actualResult['ErrorCode']?.toString() ?? '';
+        final warningCode = actualResult['WarningCode']?.toString() ?? '';
+        
+        _debugPrint('错误信息: $errorMsg');
+        _debugPrint('警告信息: $warningMsg');
+        _debugPrint('错误码: $errorCode');
+        _debugPrint('警告码: $warningCode');
+        
+        // 构建错误消息
+        String fullErrorMsg = '保存失败';
+        
+        // 如果有具体的错误消息，优先显示
+        if (errorMsg.isNotEmpty) {
+          fullErrorMsg = errorMsg;
+        } else if (warningMsg.isNotEmpty) {
+          fullErrorMsg = '警告: $warningMsg';
+        } else if (errorCode != '0' && errorCode.isNotEmpty) {
+          fullErrorMsg = '错误码: $errorCode';
+        } else if (warningCode != '0' && warningCode.isNotEmpty) {
+          fullErrorMsg = '警告码: $warningCode';
+        } else {
+          fullErrorMsg = '保存失败，请检查数据格式';
+        }
+        
+        throw Exception(fullErrorMsg);
+      }
+    } else {
+      throw Exception('网络请求失败: ${response.statusCode}');
     }
+  } catch (e, stack) {
+    GlobalErrorHandler.logErrorOnly(e, stack);
+    rethrow;
   }
-  throw Exception('请求失败: ${response.statusCode}');
 }
 
 Future<List<TableRowData>> getUsage() async {
@@ -71,9 +147,6 @@ Future<List<TableRowData>> getUsage() async {
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
-
-      // 调试：打印完整响应
-      print("用法接口完整响应: $data");
 
       // 检查 'Returns' 字段
       if (data.containsKey('Returns')) {
@@ -96,28 +169,24 @@ Future<List<TableRowData>> getUsage() async {
         }
       }
 
-      // 如果所有检查都失败，打印警告并返回空列表
-      print("警告: 无法解析用法数据，返回空列表");
-      print("Returns 类型: ${data['Returns']?.runtimeType}");
       return [];
     } else {
       throw Exception('请求失败: ${response.statusCode}');
     }
-  } catch (e) {
-    print("用法数据加载异常: $e");
+  } catch (e, stack) {
+    GlobalErrorHandler.logErrorOnly(e, stack);
     throw Exception('用法数据加载失败: $e');
   }
 }
 
-Future<List<dynamic>> getbsitemalldata(lsrptype) async
-{
+Future<List<dynamic>> getbsitemalldata(lsrptype) async {
   try {
     final response = await http.post(
       Uri.parse('https://doctor.xyhis.com/Api/NewYLTBackstage/PostCallInterface'),
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
       body: {
-        'lsrptype':lsrptype,
-        'hospitalId':1165,
+        'lsrptype': lsrptype,
+        'hospitalId': 1165,
         'tokencode': '8ab6c803f9a380df2796315cad1b4280',
         'DocumentElement': 'GetListBylsRpTypeAndHospitalId',
       },
@@ -129,6 +198,7 @@ Future<List<dynamic>> getbsitemalldata(lsrptype) async
     }
     throw Exception('请求失败: ${response.statusCode}');
   } catch (e) {
+    GlobalErrorHandler.logErrorOnly(e, StackTrace.current);
     throw Exception('数据加载失败: $e');
   }
 }

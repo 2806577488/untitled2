@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:screen_retriever/screen_retriever.dart';
-import 'His/His_page_main.dart';
+import 'His/his_page_main.dart';
 import 'login_screen.dart';
 import 'model/user_repository.dart';
 import 'pacs_page.dart';

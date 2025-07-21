@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'His_page_base_table.dart';
+import 'his_page_base_table.dart';
 import 'His_page_project_dict.dart';
 import 'His_page_combo_package.dart';
-
 
 class HisPage extends StatefulWidget {
   final String userId;
@@ -34,7 +33,7 @@ class _HisPageState extends State<HisPage> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(40),
         child: AppBar(
-          title: const Text('HIS 系统',style: TextStyle(color: Colors.white),),
+          title: const Text('HIS 系统', style: TextStyle(color: Colors.white)),
           centerTitle: true,
           backgroundColor: const Color(0xFF1a2980),
         ),
@@ -52,7 +51,7 @@ class _HisPageState extends State<HisPage> {
             // 左侧菜单
             Container(
               width: 120,
-              color: _withOpacity(Colors.grey.shade100, 0.2), // 使用修复后的方法
+              color: _withOpacity(Colors.grey.shade100, 0.2),
               child: ListView.builder(
                 itemCount: _pages.length,
                 itemBuilder: (context, index) => ListTile(
@@ -61,11 +60,11 @@ class _HisPageState extends State<HisPage> {
                     style: TextStyle(
                       color: index == _selectedIndex
                           ? Colors.white
-                          : Colors.white.withOpacity(0.8),
+                          : _withOpacity(Colors.white, 0.8),
                     ),
                   ),
                   selected: index == _selectedIndex,
-                  selectedTileColor: _withOpacity(Colors.white, 0.2), // 使用修复后的方法
+                  selectedTileColor: _withOpacity(Colors.white, 0.2),
                   selectedColor: Colors.white,
                   onTap: () => setState(() => _selectedIndex = index),
                 ),
@@ -76,7 +75,7 @@ class _HisPageState extends State<HisPage> {
               child: Container(
                 margin: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: _withOpacity(Colors.white, 0.9), // 使用修复后的方法
+                  color: _withOpacity(Colors.white, 0.9),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: _pages[_selectedIndex],
@@ -90,10 +89,14 @@ class _HisPageState extends State<HisPage> {
 
   String _getMenuItemTitle(int index) {
     switch (index) {
-      case 0: return '基础表格';
-      case 1: return '项目字典维护';
-      case 2: return '组合套餐维护';
-      default: return '未知菜单';
+      case 0:
+        return '基础表格';
+      case 1:
+        return '项目字典维护';
+      case 2:
+        return '组合套餐维护';
+      default:
+        return '未知菜单';
     }
   }
-}
+} 

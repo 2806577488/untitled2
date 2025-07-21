@@ -1,8 +1,8 @@
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../public.dart';
+import '../tools/Error.dart';
 
 /// 用户与医院信息服务工具类
 class UserAndHospitalService {
@@ -16,6 +16,8 @@ class UserAndHospitalService {
       String userCode,
       ) async {
     try {
+      GlobalErrorHandler.logErrorOnly('验证工号: $userCode', StackTrace.current);
+      
       final response = await _postRequest(
         'GetBsHospitalByUserCode',
         {'Code': userCode},
@@ -25,6 +27,8 @@ class UserAndHospitalService {
         throw Exception('请求失败 (${response.statusCode})');
       }
 
+      GlobalErrorHandler.logErrorOnly('医院信息响应: ${response.body}', StackTrace.current);
+      
       return _parseHospitalResponse(response.body);
     } catch (e) {
       throw Exception('工号验证失败: ${e.toString()}');
@@ -42,8 +46,16 @@ class UserAndHospitalService {
         throw Exception("编码不存在对应用户");
       }
 
+      // 添加调试信息
+      for (var hospital in hospitalResponse.returns) {
+        GlobalErrorHandler.logErrorOnly('医院信息: Name=${hospital.name}, HospitalId=${hospital.hospitalId}, ID=${hospital.id}', StackTrace.current);
+      }
+
       return hospitalResponse.returns.map<Location>((returnItem) {
-        return Location(returnItem.name);
+        return Location(
+          name: returnItem.name,
+          hospitalId: returnItem.id, // 使用真正的医院ID
+        );
       }).toList();
     } catch (e) {
       throw Exception("医院信息解析失败: ${e.toString()}");
@@ -62,6 +74,9 @@ class UserAndHospitalService {
       String hisType,
       ) async {
     try {
+      // 添加调试信息
+      GlobalErrorHandler.logErrorOnly('登录参数: userCode=$userCode, hospitalId=$hospitalId, hisType=$hisType', StackTrace.current);
+      
       final response = await _postRequest(
         'GetUserYLTLogin',
         {
@@ -76,6 +91,9 @@ class UserAndHospitalService {
         throw Exception('请求失败 (${response.statusCode})');
       }
 
+      // 添加响应调试信息
+      GlobalErrorHandler.logErrorOnly('登录响应: ${response.body}', StackTrace.current);
+      
       return _parseLoginResponse(response.body);
     } catch (e) {
       throw Exception('用户登录失败: ${e.toString()}');
@@ -149,10 +167,20 @@ class HospitalResponse {
 /// 医院返回项模型
 class HospitalReturn {
   final String name;
+  final String hospitalId; // 这个字段值为0，不是真正的医院ID
+  final String id; // 真正的医院ID
 
-  HospitalReturn({required this.name});
+  HospitalReturn({
+    required this.name,
+    required this.hospitalId,
+    required this.id,
+  });
 
   factory HospitalReturn.fromJson(Map<String, dynamic> json) {
-    return HospitalReturn(name: json['Name'] ?? '');
+    return HospitalReturn(
+      name: json['Name'] ?? '',
+      hospitalId: (json['HospitalId'] ?? '').toString(),
+      id: (json['ID'] ?? '').toString(), // 真正的医院ID
+    );
   }
-}
+} 
