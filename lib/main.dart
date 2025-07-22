@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'His/his_page_main.dart';
@@ -77,6 +78,11 @@ class _MyHomePageState extends State<MyHomePage> {
   String _loginLocation = '';
   String _currentModule = '首页';
 
+  /// 辅助函数：替代已废弃的withOpacity
+  static Color _withOpacity(Color color, double opacity) {
+    return color.withAlpha((opacity * 255).round());
+  }
+
   void handleLogin(String userId, String password, String location) {
     setState(() {
       _isLoggedIn = true;
@@ -103,13 +109,13 @@ class _MyHomePageState extends State<MyHomePage> {
             );
           },
           borderRadius: BorderRadius.circular(8),
-          splashColor: Colors.blue.withOpacity(0.2),
-          hoverColor: Colors.blue.withOpacity(0.1),
+          splashColor: _withOpacity(Colors.blue, 0.2),
+          hoverColor: _withOpacity(Colors.blue, 0.1),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
               color: isSelected
-                  ? Colors.blue.withOpacity(0.1)
+                  ? _withOpacity(Colors.blue, 0.1)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
               border: isSelected
@@ -155,7 +161,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   right: BorderSide(color: Colors.grey.shade300)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: _withOpacity(Colors.grey, 0.1),
                   spreadRadius: 1,
                   blurRadius: 3,
                   offset: const Offset(2, 0),

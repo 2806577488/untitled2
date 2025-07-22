@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import '../models/table_row_data.dart';
 
 class TreeNode {
   final String title;
   final List<TreeNode> children;
-  bool isExpanded;
   bool isSelected;
 
   TreeNode({
     required this.title,
     this.children = const [],
-    this.isExpanded = false,
     this.isSelected = false,
   });
 }
@@ -24,29 +23,23 @@ class TreeListView extends StatelessWidget {
   const TreeListView({
     super.key,
     required this.nodes,
-    this.level = 0,
-    this.onNodeSelected,
+    required this.level,
     required this.rootNodes,
     required this.expandedNodes,
+    this.onNodeSelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: nodes.length,
-      itemBuilder: (context, index) {
-        final node = nodes[index];
-        return _TreeNodeWidget(
-          node: node,
-          level: level,
-          onNodeSelected: onNodeSelected,
-          nodes: nodes,
-          rootNodes: rootNodes,
-          expandedNodes: expandedNodes,
-        );
-      },
+    return Column(
+      children: nodes.map((node) => _TreeNodeWidget(
+        node: node,
+        level: level,
+        nodes: nodes,
+        rootNodes: rootNodes,
+        expandedNodes: expandedNodes,
+        onNodeSelected: onNodeSelected,
+      )).toList(),
     );
   }
 }
@@ -74,6 +67,11 @@ class _TreeNodeWidget extends StatefulWidget {
 
 class _TreeNodeWidgetState extends State<_TreeNodeWidget> {
   bool _isSelected = false;
+
+  /// 辅助函数：替代已废弃的withOpacity
+  static Color _withOpacity(Color color, double opacity) {
+    return color.withAlpha((opacity * 255).round());
+  }
 
   List<TreeNode> _getAllNodes(List<TreeNode> nodes) {
     final List<TreeNode> allNodes = [];
@@ -111,7 +109,7 @@ class _TreeNodeWidgetState extends State<_TreeNodeWidget> {
               ),
             ),
             selected: _isSelected,
-            selectedTileColor: Colors.lightBlue.withOpacity(0.3),
+            selectedTileColor: _withOpacity(Colors.lightBlue, 0.3),
             onTap: () {
               setState(() {
                 if (widget.node.children.isEmpty) {
