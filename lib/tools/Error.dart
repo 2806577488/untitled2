@@ -42,7 +42,7 @@ $stackTrace
 /// 全局错误处理工具类
 class GlobalErrorHandler {
   /// 记录错误并显示对话框
-  static String logAndShowError({
+   static String logAndShowError({
     required BuildContext context,
     required Object exception,
     required StackTrace stackTrace,
@@ -132,6 +132,11 @@ class GlobalErrorHandler {
         ),
       );
     }
+  }
+
+  /// 统一的调试输出函数
+  static void debugPrint(String message) {
+    print('🔍 DEBUG: $message');
   }
 }
 

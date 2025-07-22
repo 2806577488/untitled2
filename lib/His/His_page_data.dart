@@ -3,14 +3,9 @@ import 'package:http/http.dart' as http;
 import '../models/table_row_data.dart';
 import '../tools/Error.dart';
 
-// 简单的调试输出函数
-void _debugPrint(String message) {
-  print('🔍 DEBUG: $message');
-}
-
 Future<List<TableRowData>> fetchProvinceData() async {
   try {
-    _debugPrint('开始请求省份数据...');
+    GlobalErrorHandler.debugPrint('开始请求省份数据...');
     
     final response = await http.post(
       Uri.parse('https://doctor.xyhis.com/Api/NewYLTBackstage/PostCallInterface'),
@@ -25,30 +20,30 @@ Future<List<TableRowData>> fetchProvinceData() async {
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
-      _debugPrint('省份接口响应状态: ${response.statusCode}');
-      _debugPrint('省份接口返回数据: $data');
+      GlobalErrorHandler.debugPrint('省份接口响应状态: ${response.statusCode}');
+      GlobalErrorHandler.debugPrint('省份接口返回数据: $data');
       
       if (data.containsKey('Returns')) {
         final returnsData = data['Returns'];
-        _debugPrint('Returns 类型: ${returnsData.runtimeType}');
-        _debugPrint('Returns 内容: $returnsData');
+        GlobalErrorHandler.debugPrint('Returns 类型: ${returnsData.runtimeType}');
+        GlobalErrorHandler.debugPrint('Returns 内容: $returnsData');
         
         if (returnsData is List) {
           final result = returnsData.map((item) => TableRowData.fromJson(item)).toList();
-          _debugPrint('解析后的省份数据: ${result.length} 条');
+          GlobalErrorHandler.debugPrint('解析后的省份数据: ${result.length} 条');
           return result;
         } else if (returnsData is Map) {
           // 检查 'ReturnT' 字段
           if (returnsData.containsKey('ReturnT') && returnsData['ReturnT'] is List) {
             final List<dynamic> rawList = returnsData['ReturnT'];
             final result = rawList.map((item) => TableRowData.fromJson(item)).toList();
-            _debugPrint('从 ReturnT 解析的省份数据: ${result.length} 条');
+            GlobalErrorHandler.debugPrint('从 ReturnT 解析的省份数据: ${result.length} 条');
             return result;
           }
         }
       }
       
-      _debugPrint('警告: 无法解析省份数据，返回空列表');
+      GlobalErrorHandler.debugPrint('警告: 无法解析省份数据，返回空列表');
       return [];
     } else {
       throw Exception('请求失败: ${response.statusCode}');
@@ -61,7 +56,7 @@ Future<List<TableRowData>> fetchProvinceData() async {
 
 Future<void> saveBsUsageToServer(Map<String, dynamic> bsUsageData) async {
   try {
-    _debugPrint('开始保存用法数据: $bsUsageData');
+    GlobalErrorHandler.debugPrint('开始保存用法数据: $bsUsageData');
     
     final response = await http.post(
       Uri.parse('https://doctor.xyhis.com/Api/NewYLTBackstage/PostCallInterface'),
@@ -74,24 +69,24 @@ Future<void> saveBsUsageToServer(Map<String, dynamic> bsUsageData) async {
       },
     );
     
-    _debugPrint('保存用法接口响应状态: ${response.statusCode}');
+    GlobalErrorHandler.debugPrint('保存用法接口响应状态: ${response.statusCode}');
     
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
-      _debugPrint('保存用法接口返回数据: $data');
+      GlobalErrorHandler.debugPrint('保存用法接口返回数据: $data');
       
       // 检查是否有嵌套的 Returns 字段
       Map<String, dynamic>? actualResult;
       if (data.containsKey('Returns') && data['Returns'] is Map<String, dynamic>) {
         actualResult = data['Returns'] as Map<String, dynamic>;
-        _debugPrint('发现嵌套的 Returns 字段: $actualResult');
+        GlobalErrorHandler.debugPrint('发现嵌套的 Returns 字段: $actualResult');
       } else {
         actualResult = data;
       }
       
       // 使用实际的结果数据
       if (actualResult['IsSuccess'] == true) {
-        _debugPrint('用法数据保存成功');
+        GlobalErrorHandler.debugPrint('用法数据保存成功');
         return;
       } else {
         // API 返回失败，提供详细的错误信息
@@ -100,10 +95,10 @@ Future<void> saveBsUsageToServer(Map<String, dynamic> bsUsageData) async {
         final errorCode = actualResult['ErrorCode']?.toString() ?? '';
         final warningCode = actualResult['WarningCode']?.toString() ?? '';
         
-        _debugPrint('错误信息: $errorMsg');
-        _debugPrint('警告信息: $warningMsg');
-        _debugPrint('错误码: $errorCode');
-        _debugPrint('警告码: $warningCode');
+        GlobalErrorHandler.debugPrint('错误信息: $errorMsg');
+        GlobalErrorHandler.debugPrint('警告信息: $warningMsg');
+        GlobalErrorHandler.debugPrint('错误码: $errorCode');
+        GlobalErrorHandler.debugPrint('警告码: $warningCode');
         
         // 构建错误消息
         String fullErrorMsg = '保存失败';

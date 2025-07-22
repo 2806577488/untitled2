@@ -5,12 +5,6 @@ import '../utils/tree_view.dart' show TreeView, TreeNode;
 import '../utils/editable_table.dart';
 import '../tools/Error.dart';
 import 'His_page_data.dart';
-import 'His_page_data_table.dart';
-
-// 简单的调试输出函数
-void _debugPrint(String message) {
-  print('🔍 DEBUG: $message');
-}
 
 class HisPageBaseTable extends StatefulWidget {
   const HisPageBaseTable({super.key});
@@ -20,7 +14,6 @@ class HisPageBaseTable extends StatefulWidget {
 }
 
 class _HisPageBaseTableState extends State<HisPageBaseTable> {
-  final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _rowKeys = {};
   int? _newlyInsertedId;
   String? _selectedNodeTitle;
@@ -36,13 +29,13 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
 
   Future<void> _loadData() async {
     try {
-      _debugPrint('开始加载数据...');
+      GlobalErrorHandler.debugPrint('开始加载数据...');
       
       final province = await fetchProvinceData();
-      _debugPrint('省份数据加载完成: ${province.length} 条');
+      GlobalErrorHandler.debugPrint('省份数据加载完成: ${province.length} 条');
       
       final usage = await getUsage();
-      _debugPrint('用法数据加载完成: ${usage.length} 条');
+      GlobalErrorHandler.debugPrint('用法数据加载完成: ${usage.length} 条');
       
       setState(() {
         _provinceData = province;
@@ -59,7 +52,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
           _nextId = 1;
         }
         
-        _debugPrint('数据加载完成 - 省份: ${_provinceData.length} 条, 用法: ${_usageData.length} 条');
+        GlobalErrorHandler.debugPrint('数据加载完成 - 省份: ${_provinceData.length} 条, 用法: ${_usageData.length} 条');
       });
     } catch (e, stack) {
       if (context.mounted) {
