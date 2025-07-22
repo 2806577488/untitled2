@@ -37,7 +37,7 @@ class EditableTable extends StatefulWidget {
   });
 
   @override
-  _EditableTableState createState() => _EditableTableState();
+  EditableTableState createState() => EditableTableState();
 }
 // ==================================================
 // EditableTable 组件定义结束
@@ -153,7 +153,7 @@ class __CustomDropdownState extends State<_CustomDropdown> {
 // ==================================================
 // 状态类定义开始
 // ==================================================
-class _EditableTableState extends State<EditableTable> {
+class EditableTableState extends State<EditableTable> {
   // 文本控制器映射 [rowId: [columnKey: controller]]
   final Map<int, Map<String, TextEditingController>> _controllers = {};
   // ==================================================

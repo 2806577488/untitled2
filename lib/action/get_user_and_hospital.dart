@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../public.dart';
-import '../tools/Error.dart';
+import '../tools/error.dart';
 
 /// 用户与医院信息服务工具类
 class UserAndHospitalService {

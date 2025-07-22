@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'action/get_user_and_hospital.dart';
 import 'model/user_repository.dart';
 import 'public.dart';
-import 'tools/Error.dart';
+import 'tools/error.dart';
 import 'utils/shader_warmup.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -17,10 +17,10 @@ class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.onLogin});
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  LoginScreenState createState() => LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class LoginScreenState extends State<LoginScreen> {
   // 表单相关
   final _formKey = GlobalKey<FormState>();
   bool _isSubmitting = false;
@@ -166,13 +166,13 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _apiError = null);
 
     try {
-      final UserInfo = await UserAndHospitalService.userLogin(
+      final userInfo = await UserAndHospitalService.userLogin(
         userCode,
         password,
         hospitalId,
         hisType,
       );
-      return UserInfo;
+      return userInfo;
     } catch (e, stack) {
       _handleError(e, stack, "用户登录错误");
       return null;
@@ -195,18 +195,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (userInfo != null) {
         try {
-          final repo = context.read<UserRepository>();
+          if (!context.mounted) return false;
+          final currentContext = context;
+          final repo = currentContext.read<UserRepository>();
           repo.updateUser('basic', userInfo);
           widget.onLogin(_userId, _password, _selectedLocation!.name);
           return true;
         } catch (e, stack) {
-          _handleError(e, stack, "解析用户信息错误");
+          if (mounted && context.mounted) {
+            _handleError(e, stack, "解析用户信息错误");
+          }
           return false;
         }
       }
       return false;
     } catch (e, stack) {
-      _handleError(e, stack, "验证用户错误");
+      if (mounted && context.mounted) {
+        _handleError(e, stack, "验证用户错误");
+      }
       return false;
     } finally {
       if (mounted) {

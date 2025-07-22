@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/table_row_data.dart';
-import '../tools/Error.dart';
+import '../tools/error.dart';
 
 Future<List<TableRowData>> fetchProvinceData() async {
   try {

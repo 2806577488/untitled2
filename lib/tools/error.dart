@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-import '../utils/customDialog.dart';
+import '../utils/custom_dialog.dart';
 
 // 错误信息数据类
 class ErrorDetails {

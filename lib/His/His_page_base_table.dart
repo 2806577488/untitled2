@@ -3,8 +3,8 @@ import '../models/table_column_config.dart';
 import '../models/table_row_data.dart';
 import '../utils/tree_view.dart' show TreeView, TreeNode;
 import '../utils/editable_table.dart';
-import '../tools/Error.dart';
-import 'His_page_data.dart';
+import '../tools/error.dart';
+import 'his_page_data.dart';
 
 class HisPageBaseTable extends StatefulWidget {
   const HisPageBaseTable({super.key});
@@ -57,13 +57,13 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
         });
       }
     } catch (e, stack) {
-      if (context.mounted) {
+      if (mounted && context.mounted) {
         GlobalErrorHandler.logAndShowError(
           context: context,
           exception: e,
           stackTrace: stack,
           title: "数据加载失败",
-          mounted: context.mounted,
+          mounted: mounted,
         );
       }
     }
@@ -330,7 +330,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
       await saveBsUsageToServer(usageData);
       
       // 保存成功
-      if (context.mounted) {
+      if (mounted && context.mounted) {
         GlobalErrorHandler.showSuccess(
           context: context,
           message: '用法数据保存成功',
@@ -338,7 +338,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
         );
       }
     } catch (e, stack) {
-      if (context.mounted) {
+      if (mounted && context.mounted) {
         GlobalErrorHandler.logAndShowError(
           context: context,
           exception: e,
@@ -366,7 +366,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
   void _handleAddNewUsage() {
     final hasUnsaved = _usageData.any((row) => row.isEditing);
     if (hasUnsaved) {
-      if (context.mounted) {
+      if (mounted && context.mounted) {
         GlobalErrorHandler.showSimpleError(
           context: context,
           message: '请先保存当前编辑的行',
