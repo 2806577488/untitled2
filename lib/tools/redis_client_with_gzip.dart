@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:redis/redis.dart';
-import 'package:path/path.dart' as path show join;
 import 'package:path_provider/path_provider.dart';
 import 'package:crypto/crypto.dart';
 import 'package:logger/logger.dart';
@@ -181,7 +180,7 @@ class RedisClientWithGzip {
         : Uint8List.fromList(compressed);
 
     final dir = await getTemporaryDirectory();
-    final file = File(path.join(dir.path, 'redis_cache_${key.hashCode}.tmp'));
+    final file = File('${dir.path}/redis_cache_${key.hashCode}.tmp');
     await file.writeAsBytes(bytes);
 
     return file;
