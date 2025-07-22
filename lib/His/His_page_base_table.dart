@@ -326,7 +326,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
     }
     
     try {
-      final Map<String, dynamic> usageData = row.values;
+      final List<Map<String, dynamic>> usageData = [row.values];
       await saveBsUsageToServer(usageData);
       
       // 保存成功

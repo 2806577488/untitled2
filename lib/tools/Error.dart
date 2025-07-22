@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 import '../utils/customDialog.dart';
