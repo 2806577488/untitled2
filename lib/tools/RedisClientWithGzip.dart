@@ -210,7 +210,7 @@ class RedisClientWithGzip {
     });
 
     // 提交管道事务
-    final results = _command.pipe_end(); // pipe_end 返回 void
+    _command.pipe_end(); // pipe_end 返回 void
     _logger.i('Pipeline executed');
   }
 

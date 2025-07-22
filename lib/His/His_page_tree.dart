@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/table_row_data.dart';
 
 class TreeNode {
   final String title;

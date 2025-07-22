@@ -1,5 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 import '../utils/customDialog.dart';
@@ -70,7 +70,7 @@ class GlobalErrorHandler {
   /// 记录错误但不显示对话框（用于非UI错误）
   static String logErrorOnly(Object error, StackTrace stackTrace) {
     final errorDetails = logError(error, stackTrace);
-    print(errorDetails.toString());
+    debugPrint(errorDetails.toString());
     return errorDetails.toString();
   }
 
@@ -135,8 +135,9 @@ class GlobalErrorHandler {
   }
 
   /// 统一的调试输出函数
-  static void debugPrint(String message) {
-    print('🔍 DEBUG: $message');
+  static void logDebug(String message) {
+    // 使用Flutter的debugPrint
+    debugPrint('🔍 DEBUG: $message');
   }
 }
 

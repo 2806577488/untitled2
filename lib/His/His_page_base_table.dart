@@ -29,39 +29,41 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
 
   Future<void> _loadData() async {
     try {
-      GlobalErrorHandler.debugPrint('开始加载数据...');
+      GlobalErrorHandler.logDebug('开始加载数据...');
       
       final province = await fetchProvinceData();
-      GlobalErrorHandler.debugPrint('省份数据加载完成: ${province.length} 条');
+      GlobalErrorHandler.logDebug('省份数据加载完成: ${province.length} 条');
       
       final usage = await getUsage();
-      GlobalErrorHandler.debugPrint('用法数据加载完成: ${usage.length} 条');
+      GlobalErrorHandler.logDebug('用法数据加载完成: ${usage.length} 条');
       
-      setState(() {
-        _provinceData = province;
-        _usageData = usage;
+      if (mounted) {
+        setState(() {
+          _provinceData = province;
+          _usageData = usage;
 
-        // 安全处理空列表
-        final allIds = [
-          ..._provinceData.map((e) => e.id),
-          ..._usageData.map((e) => e.id)
-        ];
-        if (allIds.isNotEmpty) {
-          _nextId = allIds.reduce((a, b) => a > b ? a : b) + 1;
-        } else {
-          _nextId = 1;
-        }
-        
-        GlobalErrorHandler.debugPrint('数据加载完成 - 省份: ${_provinceData.length} 条, 用法: ${_usageData.length} 条');
-      });
+          // 安全处理空列表
+          final allIds = [
+            ..._provinceData.map((e) => e.id),
+            ..._usageData.map((e) => e.id)
+          ];
+          if (allIds.isNotEmpty) {
+            _nextId = allIds.reduce((a, b) => a > b ? a : b) + 1;
+          } else {
+            _nextId = 1;
+          }
+          
+          GlobalErrorHandler.logDebug('数据加载完成 - 省份: ${_provinceData.length} 条, 用法: ${_usageData.length} 条');
+        });
+      }
     } catch (e, stack) {
       if (context.mounted) {
         GlobalErrorHandler.logAndShowError(
           context: context,
           exception: e,
           stackTrace: stack,
-          title: '数据加载失败',
-          mounted: mounted,
+          title: "数据加载失败",
+          mounted: context.mounted,
         );
       }
     }
