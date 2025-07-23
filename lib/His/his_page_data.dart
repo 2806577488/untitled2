@@ -3,6 +3,50 @@ import 'package:http/http.dart' as http;
 import '../models/table_row_data.dart';
 import '../tools/error.dart';
 
+/// 项目分类常量定义
+class ProjectCategories {
+  static const Map<int, String> categories = {
+    1: '中成药',
+    2: '西药',
+    3: '中药',
+    4: '检验',
+    5: '检查',
+    6: '手术',
+    7: '治疗',
+    8: '床位',
+    9: '材料',
+    10: '物资',
+    11: '设备',
+    12: '后勤',
+    13: '其它',
+    14: '毒麻',
+    15: '食品',
+  };
+
+  /// 根据分类ID获取分类名称
+  static String getCategoryName(int categoryId) {
+    return categories[categoryId] ?? '未知分类';
+  }
+
+  /// 根据分类名称获取分类ID
+  static int? getCategoryId(String categoryName) {
+    for (var entry in categories.entries) {
+      if (entry.value == categoryName) {
+        return entry.key;
+      }
+    }
+    return null;
+  }
+
+  /// 获取所有分类列表
+  static List<Map<String, dynamic>> getAllCategories() {
+    return categories.entries.map((entry) => {
+      'id': entry.key,
+      'name': entry.value,
+    }).toList();
+  }
+}
+
 Future<List<TableRowData>> fetchProvinceData({String hisType = '0'}) async {
   try {
     GlobalErrorHandler.logDebug('开始请求省份数据...');
@@ -186,14 +230,31 @@ Future<List<TableRowData>> getUsage({String hisType = '0'}) async {
   }
 }
 
-Future<List<dynamic>> getbsitemalldata(lsrptype) async {
+/// 根据LSRPTYPE获取bsitem数据
+/// [lsrptype] 项目分类ID (1-15)
+/// [hisType] HIS系统类型，默认为'0'
+/// [hospitalId] 医院ID，默认为'1165'
+Future<List<TableRowData>> getBsItemAllData(
+  int lsrptype, {
+  String hisType = '0',
+  String hospitalId = '1165',
+}) async {
   try {
+    // 验证lsrptype参数
+    if (lsrptype < 1 || lsrptype > 15) {
+      throw Exception('无效的项目分类ID: $lsrptype，有效范围为1-15');
+    }
+
+    final categoryName = ProjectCategories.getCategoryName(lsrptype);
+    GlobalErrorHandler.logDebug('开始获取$categoryName数据，分类ID: $lsrptype');
+
     final response = await http.post(
       Uri.parse('https://doctor.xyhis.com/Api/NewYLTBackstage/PostCallInterface'),
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
       body: {
-        'lsrptype': lsrptype,
-        'hospitalId': 1165,
+        'lsrptype': lsrptype.toString(),
+        'hospitalId': hospitalId,
+        'histype': hisType,
         'tokencode': '8ab6c803f9a380df2796315cad1b4280',
         'DocumentElement': 'GetListBylsRpTypeAndHospitalId',
       },
@@ -201,11 +262,74 @@ Future<List<dynamic>> getbsitemalldata(lsrptype) async {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['Returns'] as List? ?? [];
+      GlobalErrorHandler.logDebug('$categoryName接口响应: ${response.statusCode}');
+      GlobalErrorHandler.logDebug('$categoryName接口返回数据: $data');
+
+      final returnsData = data['Returns'];
+      if (returnsData == null) {
+        GlobalErrorHandler.logDebug('$categoryName数据为空');
+        return [];
+      }
+
+      List<dynamic> itemList;
+      if (returnsData is List) {
+        itemList = returnsData;
+      } else if (returnsData is Map && returnsData.containsKey('ReturnT')) {
+        itemList = returnsData['ReturnT'] as List? ?? [];
+      } else {
+        GlobalErrorHandler.logDebug('$categoryName数据格式异常: $returnsData');
+        return [];
+      }
+
+      final result = itemList.map<TableRowData>((item) {
+        return TableRowData.fromJson(item);
+      }).toList();
+
+      GlobalErrorHandler.logDebug('$categoryName数据解析完成: ${result.length} 条');
+      return result;
+    } else {
+      throw Exception('$categoryName数据请求失败: ${response.statusCode}');
     }
-    throw Exception('请求失败: ${response.statusCode}');
-  } catch (e) {
-    GlobalErrorHandler.logErrorOnly(e, StackTrace.current);
-    throw Exception('数据加载失败: $e');
+  } catch (e, stack) {
+    GlobalErrorHandler.logErrorOnly(e, stack);
+    final categoryName = ProjectCategories.getCategoryName(lsrptype);
+    throw Exception('$categoryName数据加载失败: $e');
+  }
+}
+
+/// 获取所有项目分类的数据
+/// [hisType] HIS系统类型，默认为'0'
+/// [hospitalId] 医院ID，默认为'1165'
+Future<Map<int, List<TableRowData>>> getAllBsItemData({
+  String hisType = '0',
+  String hospitalId = '1165',
+}) async {
+  final Map<int, List<TableRowData>> allData = {};
+  
+  try {
+    GlobalErrorHandler.logDebug('开始获取所有项目分类数据...');
+    
+    // 并行获取所有分类的数据
+    final futures = <Future<void>>[];
+    
+    for (int categoryId = 1; categoryId <= 15; categoryId++) {
+      futures.add(
+        getBsItemAllData(categoryId, hisType: hisType, hospitalId: hospitalId)
+            .then((data) {
+          allData[categoryId] = data;
+        }).catchError((e) {
+          GlobalErrorHandler.logErrorOnly(e, StackTrace.current);
+          allData[categoryId] = [];
+        }),
+      );
+    }
+    
+    await Future.wait(futures);
+    
+    GlobalErrorHandler.logDebug('所有项目分类数据获取完成');
+    return allData;
+  } catch (e, stack) {
+    GlobalErrorHandler.logErrorOnly(e, stack);
+    throw Exception('获取所有项目分类数据失败: $e');
   }
 }

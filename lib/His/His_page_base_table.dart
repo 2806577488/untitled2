@@ -194,7 +194,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Row(
-        children: [
+          children: [
           SizedBox(
             width: 220,
             child: TreeView(
@@ -204,7 +204,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
           ),
           const SizedBox(width: 16),
           Expanded(child: _buildDataContent()),
-        ],
+          ],
       ),
     );
   }
@@ -400,4 +400,4 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
       }
     });
   }
-} 
+}
