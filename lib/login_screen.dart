@@ -190,7 +190,7 @@ class LoginScreenState extends State<LoginScreen> {
         _userId,
         _password,
         _selectedLocation!.hospitalId,
-        '7',    // TODO: 从配置或API获取hisType
+        _selectedLocation!.hisType, // 从医院信息中获取hisType
       );
 
       if (userInfo != null) {

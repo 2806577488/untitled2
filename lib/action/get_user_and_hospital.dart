@@ -55,6 +55,7 @@ class UserAndHospitalService {
         return Location(
           name: returnItem.name,
           hospitalId: returnItem.id, // 使用真正的医院ID
+          hisType: returnItem.hisType, // 添加hisType
         );
       }).toList();
     } catch (e) {
@@ -169,11 +170,13 @@ class HospitalReturn {
   final String name;
   final String hospitalId; // 这个字段值为0，不是真正的医院ID
   final String id; // 真正的医院ID
+  final String hisType; // 添加hisType字段
 
   HospitalReturn({
     required this.name,
     required this.hospitalId,
     required this.id,
+    required this.hisType,
   });
 
   factory HospitalReturn.fromJson(Map<String, dynamic> json) {
@@ -181,6 +184,7 @@ class HospitalReturn {
       name: json['Name'] ?? '',
       hospitalId: (json['HospitalId'] ?? '').toString(),
       id: (json['ID'] ?? '').toString(), // 真正的医院ID
+      hisType: (json['HisType'] ?? '0').toString(), // 从API获取hisType
     );
   }
 } 

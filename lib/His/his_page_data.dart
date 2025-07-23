@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/table_row_data.dart';
 import '../tools/error.dart';
 
-Future<List<TableRowData>> fetchProvinceData() async {
+Future<List<TableRowData>> fetchProvinceData({String hisType = '0'}) async {
   try {
     GlobalErrorHandler.logDebug('开始请求省份数据...');
     
@@ -14,7 +14,7 @@ Future<List<TableRowData>> fetchProvinceData() async {
         'tokencode': '8ab6c803f9a380df2796315cad1b4280',
         'DocumentElement': 'GetBsAreaProvinceAll',
         "hospitalId": "1165",
-        "histype": "0",
+        "histype": hisType, // 使用传入的hisType参数
       },
     );
 
@@ -65,7 +65,7 @@ Future<List<TableRowData>> fetchProvinceData() async {
   }
 }
 
-Future<void> saveBsUsageToServer(List<Map<String, dynamic>> bsUsageData) async {
+Future<void> saveBsUsageToServer(List<Map<String, dynamic>> bsUsageData, {String hisType = '0'}) async {
   try {
     GlobalErrorHandler.logDebug('开始保存用法数据: $bsUsageData');
     
@@ -76,7 +76,7 @@ Future<void> saveBsUsageToServer(List<Map<String, dynamic>> bsUsageData) async {
         'tokencode': '8ab6c803f9a380df2796315cad1b4280',
         'DocumentElement': 'SaveBsUsage',
         'hospitalId': '1165',
-        'histype': '0',
+        'histype': hisType, // 使用传入的hisType参数
         'bsUsageData': jsonEncode(bsUsageData),
       },
     );
@@ -139,7 +139,7 @@ Future<void> saveBsUsageToServer(List<Map<String, dynamic>> bsUsageData) async {
   }
 }
 
-Future<List<TableRowData>> getUsage() async {
+Future<List<TableRowData>> getUsage({String hisType = '0'}) async {
   try {
     final response = await http.post(
       Uri.parse('https://doctor.xyhis.com/Api/NewYLTBackstage/PostCallInterface'),
@@ -148,7 +148,7 @@ Future<List<TableRowData>> getUsage() async {
         'tokencode': '8ab6c803f9a380df2796315cad1b4280',
         'DocumentElement': 'GetBsUsageAll',
         "hospitalId": "1165",
-        "histype": "0",
+        "histype": hisType, // 使用传入的hisType参数
       },
     );
 

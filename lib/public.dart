@@ -1,13 +1,15 @@
 class Location {
   final String name;
   final String hospitalId;
+  final String hisType; // 添加hisType字段
 
-  Location({required this.name, required this.hospitalId});
+  Location({required this.name, required this.hospitalId, required this.hisType});
 
   factory Location.fromJson(Map<String, dynamic> json) {
     return Location(
       name: json['name'] ?? '',
       hospitalId: json['hospitalId'] ?? '',
+      hisType: json['hisType'] ?? '0', // 默认值为'0'
     );
   }
 
@@ -15,6 +17,7 @@ class Location {
     return {
       'name': name,
       'hospitalId': hospitalId,
+      'hisType': hisType,
     };
   }
 
@@ -24,10 +27,11 @@ class Location {
           other is Location &&
               runtimeType == other.runtimeType &&
               name == other.name &&
-              hospitalId == other.hospitalId;
+              hospitalId == other.hospitalId &&
+              hisType == other.hisType;
 
   @override
-  int get hashCode => name.hashCode ^ hospitalId.hashCode;
+  int get hashCode => name.hashCode ^ hospitalId.hashCode ^ hisType.hashCode;
 }
 
 class User {
