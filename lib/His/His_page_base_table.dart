@@ -7,7 +7,14 @@ import '../tools/error.dart';
 import 'his_page_data.dart';
 
 class HisPageBaseTable extends StatefulWidget {
-  const HisPageBaseTable({super.key});
+  final String hospitalId;
+  final String hisType;
+  
+  const HisPageBaseTable({
+    super.key,
+    required this.hospitalId,
+    required this.hisType,
+  });
 
   @override
   State<HisPageBaseTable> createState() => _HisPageBaseTableState();
@@ -20,27 +27,51 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
   List<TableRowData> _provinceData = [];
   List<TableRowData> _usageData = [];
   int _nextId = 1;
+  
+  // 添加加载状态管理
+  bool _isLoading = false;
+  bool _isInitialized = false;
+  String? _loadingMessage;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // 异步加载数据，不阻塞UI
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDataAsync();
+    });
   }
 
-  Future<void> _loadData() async {
+  /// 智能异步加载数据，支持缓存和预加载
+  Future<void> _loadDataAsync() async {
+    if (_isLoading) return; // 防止重复加载
+    
+    setState(() {
+      _isLoading = true;
+      _loadingMessage = '正在加载数据...';
+    });
+
     try {
-      GlobalErrorHandler.logDebug('开始加载数据...');
+      GlobalErrorHandler.logDebug('开始智能异步加载数据...');
       
-      final province = await fetchProvinceData();
-      GlobalErrorHandler.logDebug('省份数据加载完成: ${province.length} 条');
-      
-      final usage = await getUsage();
-      GlobalErrorHandler.logDebug('用法数据加载完成: ${usage.length} 条');
+      // 使用智能加载器，支持缓存和后台刷新
+      final results = await Future.wait([
+        SmartDataLoader.smartLoad(
+          'province_data_${widget.hisType}_${widget.hospitalId}',
+          () => fetchProvinceData(hisType: widget.hisType, hospitalId: widget.hospitalId),
+        ),
+        SmartDataLoader.smartLoad(
+          'usage_data_${widget.hisType}_${widget.hospitalId}',
+          () => getUsage(hisType: widget.hisType, hospitalId: widget.hospitalId),
+        ),
+      ]);
       
       if (mounted) {
         setState(() {
-          _provinceData = province;
-          _usageData = usage;
+          _provinceData = results[0];
+          _usageData = results[1];
+          _isLoading = false;
+          _isInitialized = true;
 
           // 安全处理空列表
           final allIds = [
@@ -53,18 +84,134 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
             _nextId = 1;
           }
           
-          GlobalErrorHandler.logDebug('数据加载完成 - 省份: ${_provinceData.length} 条, 用法: ${_usageData.length} 条');
+          GlobalErrorHandler.logDebug('智能数据加载完成 - 省份: ${_provinceData.length} 条, 用法: ${_usageData.length} 条');
         });
       }
     } catch (e, stack) {
-      if (mounted && context.mounted) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        
+      if (context.mounted) {
         GlobalErrorHandler.logAndShowError(
           context: context,
           exception: e,
           stackTrace: stack,
-          title: "数据加载失败",
+            title: "数据加载失败",
           mounted: mounted,
         );
+      }
+    }
+  }
+  }
+
+  /// 显示缓存信息
+  void _showCacheInfo() {
+    final cacheStatus = DataCacheManager.getCacheStatus();
+    final isPreloaded = AppDataPreloader.isPreloaded;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('缓存信息'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('预加载状态: ${isPreloaded ? "已完成" : "未完成"}'),
+            const SizedBox(height: 8),
+            Text('缓存项目数: ${cacheStatus['cachedKeys'].length}'),
+            const SizedBox(height: 8),
+            ...cacheStatus['cacheSizes'].entries.map((entry) => 
+              Text('${entry.key}: ${entry.value} 条数据')
+            ),
+            const SizedBox(height: 8),
+            Text('缓存有效期: 30分钟'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('关闭'),
+          ),
+          TextButton(
+            onPressed: () {
+              DataCacheManager.clearCache(null);
+              Navigator.of(context).pop();
+              GlobalErrorHandler.showSuccess(
+                context: context,
+                message: '缓存已清除',
+                mounted: mounted,
+              );
+            },
+            child: const Text('清除缓存'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 刷新数据
+  Future<void> _refreshData({bool forceRefresh = false}) async {
+    setState(() {
+      _isInitialized = false;
+      _loadingMessage = forceRefresh ? '正在强制刷新数据...' : '正在刷新数据...';
+    });
+    
+    try {
+      GlobalErrorHandler.logDebug('开始刷新数据 (强制刷新: $forceRefresh)...');
+      
+      // 使用智能加载器，支持强制刷新
+      final results = await Future.wait([
+        SmartDataLoader.smartLoad(
+          'province_data_${widget.hisType}_${widget.hospitalId}',
+          () => fetchProvinceData(hisType: widget.hisType, hospitalId: widget.hospitalId),
+          forceRefresh: forceRefresh,
+        ),
+        SmartDataLoader.smartLoad(
+          'usage_data_${widget.hisType}_${widget.hospitalId}',
+          () => getUsage(hisType: widget.hisType, hospitalId: widget.hospitalId),
+          forceRefresh: forceRefresh,
+        ),
+      ]);
+      
+      if (mounted) {
+        setState(() {
+          _provinceData = results[0];
+          _usageData = results[1];
+          _isLoading = false;
+          _isInitialized = true;
+
+          // 安全处理空列表
+          final allIds = [
+            ..._provinceData.map((e) => e.id),
+            ..._usageData.map((e) => e.id)
+          ];
+          if (allIds.isNotEmpty) {
+            _nextId = allIds.reduce((a, b) => a > b ? a : b) + 1;
+          } else {
+            _nextId = 1;
+          }
+          
+          GlobalErrorHandler.logDebug('数据刷新完成 - 省份: ${_provinceData.length} 条, 用法: ${_usageData.length} 条');
+        });
+      }
+    } catch (e, stack) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        
+        if (context.mounted) {
+          GlobalErrorHandler.logAndShowError(
+            context: context,
+            exception: e,
+            stackTrace: stack,
+            title: "数据刷新失败",
+            mounted: mounted,
+          );
+        }
       }
     }
   }
@@ -253,9 +400,81 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
           ),
         ],
       ),
-      child: _selectedNodeTitle != null
-          ? _buildDataTable()
-          : const Center(child: Text('请从左侧选择数据项')),
+      child: _isLoading 
+          ? _buildLoadingState()
+          : _selectedNodeTitle != null
+              ? _buildDataTable()
+              : const Center(child: Text('请从左侧选择数据项')),
+    );
+  }
+
+  // 构建加载状态
+  Widget _buildLoadingState() {
+    final isPreloaded = AppDataPreloader.isPreloaded;
+    
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _loadingMessage ?? '正在加载数据...',
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isPreloaded 
+                ? '正在后台更新数据...' 
+                : _isInitialized 
+                    ? '正在后台更新数据...' 
+                    : '首次加载，请稍候...',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[400],
+            ),
+          ),
+          if (isPreloaded) ...[
+            const SizedBox(height: 8),
+            Text(
+              '数据已预加载，加载速度更快',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.green[600],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.blue),
+                onPressed: () => _refreshData(),
+                tooltip: '刷新数据',
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.orange),
+                onPressed: () => _refreshData(forceRefresh: true),
+                tooltip: '强制刷新（忽略缓存）',
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.info_outline, color: Colors.grey),
+                onPressed: () => _showCacheInfo(),
+                tooltip: '查看缓存信息',
+              ),
+          ],
+        ),
+        ],
+      ),
     );
   }
 
@@ -327,7 +546,7 @@ class _HisPageBaseTableState extends State<HisPageBaseTable> {
     
     try {
       final List<Map<String, dynamic>> usageData = [row.values];
-      await saveBsUsageToServer(usageData);
+      await saveBsUsageToServer(usageData, hisType: widget.hisType, hospitalId: widget.hospitalId);
       
       // 保存成功
       if (mounted && context.mounted) {

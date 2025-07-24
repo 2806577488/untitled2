@@ -6,8 +6,16 @@ import 'his_page_combo_package.dart';
 class HisPage extends StatefulWidget {
   final String userId;
   final String loginLocation;
+  final String hospitalId;
+  final String hisType;
 
-  const HisPage({super.key, required this.userId, required this.loginLocation});
+  const HisPage({
+    super.key, 
+    required this.userId, 
+    required this.loginLocation,
+    required this.hospitalId,
+    required this.hisType,
+  });
 
   @override
   State<HisPage> createState() => _HisPageState();
@@ -16,11 +24,24 @@ class HisPage extends StatefulWidget {
 class _HisPageState extends State<HisPage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const HisPageBaseTable(),
-    const HisPageProjectDict(),
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    // 在initState中初始化_pages，以便能够访问widget参数
+    _pages = [
+      HisPageBaseTable(
+        hospitalId: widget.hospitalId,
+        hisType: widget.hisType,
+      ),
+      HisPageProjectDict(
+        hospitalId: widget.hospitalId,
+        hisType: widget.hisType,
+      ),
     const HisPageComboPackage(),
   ];
+  }
 
   // 创建带透明度的颜色
   static Color _withOpacity(Color color, double opacity) {

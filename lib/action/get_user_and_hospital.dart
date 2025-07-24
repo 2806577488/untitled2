@@ -16,7 +16,7 @@ class UserAndHospitalService {
       String userCode,
       ) async {
     try {
-      GlobalErrorHandler.logErrorOnly('验证工号: $userCode', StackTrace.current);
+      GlobalErrorHandler.logDebug('验证工号: $userCode');
       
       final response = await _postRequest(
         'GetBsHospitalByUserCode',
@@ -27,7 +27,7 @@ class UserAndHospitalService {
         throw Exception('请求失败 (${response.statusCode})');
       }
 
-      GlobalErrorHandler.logErrorOnly('医院信息响应: ${response.body}', StackTrace.current);
+      //GlobalErrorHandler.logDebug('医院信息响应: ${response.body}');
       
       return _parseHospitalResponse(response.body);
     } catch (e) {
@@ -48,7 +48,7 @@ class UserAndHospitalService {
 
       // 添加调试信息
       for (var hospital in hospitalResponse.returns) {
-        GlobalErrorHandler.logErrorOnly('医院信息: Name=${hospital.name}, HospitalId=${hospital.hospitalId}, ID=${hospital.id}', StackTrace.current);
+        GlobalErrorHandler.logDebug('医院信息: Name=${hospital.name}, HospitalId=${hospital.hospitalId}, ID=${hospital.id}');
       }
 
       return hospitalResponse.returns.map<Location>((returnItem) {
@@ -76,7 +76,7 @@ class UserAndHospitalService {
       ) async {
     try {
       // 添加调试信息
-      GlobalErrorHandler.logErrorOnly('登录参数: userCode=$userCode, hospitalId=$hospitalId, hisType=$hisType', StackTrace.current);
+      GlobalErrorHandler.logDebug('登录参数: userCode=$userCode, hospitalId=$hospitalId, hisType=$hisType');
       
       final response = await _postRequest(
         'GetUserYLTLogin',
@@ -93,7 +93,7 @@ class UserAndHospitalService {
       }
 
       // 添加响应调试信息
-      GlobalErrorHandler.logErrorOnly('登录响应: ${response.body}', StackTrace.current);
+      GlobalErrorHandler.logDebug('登录响应: ${response.body}');
       
       return _parseLoginResponse(response.body);
     } catch (e) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'His/his_page_main.dart';
+import 'His/his_page_data.dart';
 import 'login_screen.dart';
 import 'model/user_repository.dart';
 import 'pacs_page.dart';
@@ -9,7 +10,9 @@ import 'lis_page.dart';
 import 'sales_page.dart';
 import 'nursing_page.dart';
 import 'data_page.dart';
+import 'public.dart'; // 导入Location类
 import 'package:window_manager/window_manager.dart';
+import 'tools/error.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +47,9 @@ void main() async {
       child: const MyApp(),
     ),
   );
+  
+  // 移除这里的预加载调用，避免重复预加载
+  // AppDataPreloader.preloadOnAppStart();
 }
 
 class MyApp extends StatelessWidget {
@@ -75,6 +81,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isLoggedIn = false;
   String _userId = '';
   String _loginLocation = '';
+  Location? _selectedLocation; // 添加完整的Location对象
   String _currentModule = '首页';
 
   /// 辅助函数：替代已废弃的withOpacity
@@ -82,11 +89,21 @@ class _MyHomePageState extends State<MyHomePage> {
     return color.withAlpha((opacity * 255).round());
   }
 
-  void handleLogin(String userId, String password, String location) {
+  void handleLogin(String userId, String password, String location, Location selectedLocation) {
     setState(() {
       _isLoggedIn = true;
       _userId = userId;
       _loginLocation = location;
+      _selectedLocation = selectedLocation; // 保存完整的Location对象
+    });
+    
+    // 登录成功后在后台异步预加载数据，不阻塞登录流程
+    Future.delayed(const Duration(milliseconds: 100), () {
+      GlobalErrorHandler.logDebug('开始后台预加载HIS数据...');
+      SmartDataLoader.preloadAllData(
+        hisType: selectedLocation.hisType,
+        hospitalId: selectedLocation.hospitalId,
+      );
     });
   }
 
@@ -205,6 +222,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   HisPage(
                     userId: _userId,
                     loginLocation: _loginLocation,
+                    hospitalId: _selectedLocation?.hospitalId ?? '1165',
+                    hisType: _selectedLocation?.hisType ?? '0',
                   ),
                 ),
                 _buildNavButton(

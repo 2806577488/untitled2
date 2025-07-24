@@ -12,7 +12,7 @@ import 'tools/error.dart';
 import 'utils/shader_warmup.dart';
 
 class LoginScreen extends StatefulWidget {
-  final Function(String, String, String) onLogin;
+  final Function(String, String, String, Location) onLogin;
 
   const LoginScreen({super.key, required this.onLogin});
 
@@ -139,6 +139,7 @@ class LoginScreenState extends State<LoginScreen> {
 
     try {
       final locations = await UserAndHospitalService.validateUserCode(userCode);
+      
       if (mounted) {
         setState(() {
           _loginLocation = locations;
@@ -146,7 +147,7 @@ class LoginScreenState extends State<LoginScreen> {
         });
       }
     } catch (e, stack) {
-      _handleError(e, stack, '操作失败');
+      _handleError(e, stack, '获取医院信息失败');
     } finally {
       if (mounted) {
         setState(() => _isValidating = false);
@@ -199,7 +200,7 @@ class LoginScreenState extends State<LoginScreen> {
           final currentContext = context;
           final repo = currentContext.read<UserRepository>();
           repo.updateUser('basic', userInfo);
-          widget.onLogin(_userId, _password, _selectedLocation!.name);
+          widget.onLogin(_userId, _password, _selectedLocation!.name, _selectedLocation!);
           return true;
         } catch (e, stack) {
           if (mounted && context.mounted) {
@@ -353,13 +354,58 @@ class LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 30),
                       ElevatedButton.icon(
-                        icon: const Icon(Icons.login),
+                        icon: _isSubmitting 
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Icon(Icons.login),
                         label: Text(_isSubmitting ? '登录中...' : '登录'),
-                        onPressed: _isSubmitting ? null : () async {
+                        onPressed: (_isSubmitting || _isValidating || _selectedLocation == null) 
+                            ? null 
+                            : () async {
                            await _submit();
                         },
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
+                        ),
+                      ),
+                      // 登录状态提示
+                      if (_isValidating)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: Text(
+                            '请等待医院信息加载完成',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                        )
+                      else if (_loginLocation.isEmpty && _userId.isNotEmpty && !_isValidating)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: Text(
+                            '请重新输入正确的工号',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ),
+                          ),
+                        )
+                      else if (_selectedLocation == null && _loginLocation.isNotEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: Text(
+                            '请选择登录地点后再登录',
+                            style: TextStyle(
+                              color: Colors.orange,
+                              fontSize: 12,
+                            ),
                         ),
                       ),
                     ],

@@ -6,7 +6,14 @@ import '../tools/error.dart';
 import 'his_page_data.dart';
 
 class HisPageProjectDict extends StatefulWidget {
-  const HisPageProjectDict({super.key});
+  final String hospitalId;
+  final String hisType;
+  
+  const HisPageProjectDict({
+    super.key,
+    required this.hospitalId,
+    required this.hisType,
+  });
 
   @override
   State<HisPageProjectDict> createState() => _HisPageProjectDictState();
@@ -31,13 +38,44 @@ class _HisPageProjectDictState extends State<HisPageProjectDict> {
     });
 
     try {
-      final data = await getAllBsItemData();
-      if (mounted) {
-        setState(() {
-          _allData = data;
-          _isLoading = false;
-        });
+      // 首先尝试从预加载的完整数据中获取中成药
+      setState(() {
+        _loadingMessage = '正在加载中成药数据...';
+      });
+      
+      // 优先检查是否有预加载的完整数据
+      final preloadedData = DataCacheManager.getCachedMapData('all_categories_${widget.hisType}_${widget.hospitalId}');
+      
+      if (preloadedData != null && preloadedData[1] != null) {
+        // 使用预加载的中成药数据
+        if (mounted) {
+          setState(() {
+            _allData[1] = preloadedData[1]!;
+            _selectedCategory = 1;
+            _isLoading = false;
+          });
+          GlobalErrorHandler.logDebug('使用预加载的中成药数据，跳过重复请求');
+        }
+      } else {
+        // 预加载数据不可用，单独加载中成药
+        final priorityData = await SmartDataLoader.smartLoad(
+          'category_1_${widget.hisType}_${widget.hospitalId}',
+          () => getBsItemAllData(1, hisType: widget.hisType, hospitalId: widget.hospitalId),
+        );
+        
+        if (mounted) {
+          setState(() {
+            _allData[1] = priorityData;
+            _selectedCategory = 1;
+            _isLoading = false;
+          });
+          GlobalErrorHandler.logDebug('中成药数据单独加载完成');
+        }
       }
+      
+      // 在后台加载完整的分类数据
+      _loadRemainingDataInBackground();
+      
     } catch (e, stack) {
       if (mounted && context.mounted) {
         GlobalErrorHandler.logAndShowError(
@@ -54,6 +92,29 @@ class _HisPageProjectDictState extends State<HisPageProjectDict> {
     }
   }
 
+  /// 在后台加载剩余的分类数据
+  void _loadRemainingDataInBackground() {
+    Future(() async {
+      try {
+        GlobalErrorHandler.logDebug('开始后台加载完整的项目分类数据...');
+        
+        final completeData = await SmartDataLoader.smartLoadMap(
+          'all_categories_${widget.hisType}_${widget.hospitalId}',
+          () => getAllBsItemData(hisType: widget.hisType, hospitalId: widget.hospitalId),
+        );
+        
+        if (mounted) {
+          setState(() {
+            _allData = completeData;
+          });
+          GlobalErrorHandler.logDebug('后台加载完成，所有分类数据已更新');
+        }
+      } catch (e) {
+        GlobalErrorHandler.logDebug('后台加载失败: $e');
+      }
+    });
+  }
+
   Future<void> _loadSingleCategory(int categoryId) async {
     setState(() {
       _isLoading = true;
@@ -61,7 +122,12 @@ class _HisPageProjectDictState extends State<HisPageProjectDict> {
     });
 
     try {
-      final data = await getBsItemAllData(categoryId);
+      // 使用SmartDataLoader智能加载单个分类，支持缓存
+      final data = await SmartDataLoader.smartLoad(
+        'category_${categoryId}_${widget.hisType}_${widget.hospitalId}',
+        () => getBsItemAllData(categoryId, hisType: widget.hisType, hospitalId: widget.hospitalId),
+      );
+      
       if (mounted) {
         setState(() {
           _allData[categoryId] = data;
